@@ -1,0 +1,21 @@
+{
+  "weights": {
+    "module_completion": 0.40,
+    "task_completion": 0.30,
+    "checklist_completion": 0.15,
+    "quiz_assessment_performance": 0.15
+  },
+  "thresholds": {
+    "quiz_pass_percentage": 80.0,
+    "requires_attention_quiz_threshold": 70.0,
+    "requires_attention_progress_threshold": 50.0,
+    "behind_schedule_days_grace": 7
+  },
+  "status_definitions": {
+    "completed": "All assigned modules, tasks, checklists, and assessments completed with passing scores.",
+    "assessment_required": "A required practical task assessment or quiz is pending evaluation.",
+    "behind_schedule": "Assigned stage activities have passed target completion timelines.",
+    "requires_attention": "Performance scores or completion percentage is below configured thresholds.",
+    "on_track": "Onboarding progress is proceeding within expected schedule and quality standards."
+  }
+}

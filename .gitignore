@@ -1,0 +1,46 @@
+# Python Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.secret
+
+# Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Database & Storage
+*.db
+*.sqlite
+*.sqlite3
+uploads/
+!uploads/.gitkeep
+
+# Build & Separated Deploy Artifacts
+node_modules/
+.next/
+deploy/
+dist/
+build/
+
+# IDEs & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs
+*.log

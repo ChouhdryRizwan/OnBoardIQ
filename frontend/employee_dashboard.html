@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OnBoardIQ — Employee Learning Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-bg: #0f172a;
+            --card-bg: #1e293b;
+            --accent-blue: #38bdf8;
+            --accent-purple: #818cf8;
+            --accent-green: #34d399;
+            --accent-amber: #fbbf24;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+        }
+
+        body {
+            background-color: var(--primary-bg);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background-color: #020617;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .badge-status {
+            font-weight: 700;
+            padding: 8px 16px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-on_track { background-color: #064e3b; color: #a7f3d0; }
+        .status-requires_attention { background-color: #7c2d12; color: #ffedd5; }
+        .status-behind_schedule { background-color: #7f1d1d; color: #fecaca; }
+        .status-assessment_required { background-color: #581c87; color: #e9d5ff; }
+        .status-completed { background-color: #1e3a8a; color: #bfdbfe; }
+
+        .progress-bar-glow {
+            background: linear-gradient(90deg, #38bdf8, #34d399);
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+        }
+
+        .nav-tabs .nav-link {
+            color: var(--text-muted);
+            border: none;
+            border-bottom: 2px solid transparent;
+            font-weight: 600;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: var(--accent-blue);
+            background-color: transparent;
+            border-bottom: 2px solid var(--accent-blue);
+        }
+
+        .module-card {
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .module-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-blue);
+        }
+    </style>
+</head>
+<body class="py-3">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark mb-4 px-4">
+        <a class="navbar-brand fw-bold" href="#">
+            <i class="fa-solid fa-graduation-cap text-info me-2"></i> OnBoardIQ — Employee Learning Portal
+        </a>
+        <div class="ms-auto d-flex gap-3 align-items-center">
+            <span class="text-muted small">Current View: Employee Workspace</span>
+            <a href="/admin/human-review" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-user-shield me-1"></i> Admin Portal</a>
+        </div>
+    </nav>
+
+    <div class="container-fluid px-4">
+        <!-- Profile Banner & Overall Status -->
+        <div class="card p-4 mb-4">
+            <div class="row align-items-center">
+                <div class="col-md-7">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle bg-primary bg-opacity-25 p-3 text-info">
+                            <i class="fa-solid fa-user-graduate fa-2x"></i>
+                        </div>
+                        <div>
+                            <h3 class="fw-bold mb-1" id="empName">Loading Employee Profile...</h3>
+                            <p class="text-muted mb-0"><span id="empRole">---</span> • <span id="empDept">---</span></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-5 text-end">
+                    <div class="small text-muted mb-1">Overall Onboarding Status</div>
+                    <span id="statusBadge" class="badge badge-status status-on_track">LOADING...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Metrics Overview Grid -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card p-3 text-center">
+                    <div class="text-muted small mb-1">Overall Progress</div>
+                    <h2 class="fw-bold text-info mb-2" id="overallPct">0%</h2>
+                    <div class="progress bg-secondary bg-opacity-25" style="height: 8px;">
+                        <div id="overallProgressBar" class="progress-bar progress-bar-glow" style="width: 0%;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card p-3 text-center">
+                    <div class="text-muted small mb-1">Modules Completed</div>
+                    <h2 class="fw-bold text-success mb-0" id="modulesRatio">0 / 0</h2>
+                    <div class="small text-muted mt-1" id="currentStageText">Current Stage: Day 1</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card p-3 text-center">
+                    <div class="text-muted small mb-1">Tasks & Checklists</div>
+                    <h2 class="fw-bold text-warning mb-0" id="tasksRatio">0 / 0</h2>
+                    <div class="small text-muted mt-1" id="chkPctText">Checklists: 0%</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card p-3 text-center">
+                    <div class="text-muted small mb-1">Quiz & Assessment Score</div>
+                    <h2 class="fw-bold text-primary mb-0" id="quizScoreText">0%</h2>
+                    <div class="small text-muted mt-1">Passing standard: 80%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Navigation Tabs -->
+        <ul class="nav nav-tabs mb-4 border-secondary" id="learningTabs">
+            <li class="nav-item">
+                <a class="nav-link active" data-bs-toggle="tab" href="#tabModules"><i class="fa-solid fa-book-open me-2"></i> Learning Modules</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#tabChecklists"><i class="fa-solid fa-square-check me-2"></i> Checklists</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#tabTasks"><i class="fa-solid fa-list-check me-2"></i> Practical Tasks</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#tabRecommendations"><i class="fa-solid fa-lightbulb me-2"></i> Adaptive Recommendations</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#tabMilestones"><i class="fa-solid fa-flag-checkered me-2"></i> Milestones</a>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+            <!-- 1. Learning Modules Tab -->
+            <div class="tab-pane fade show active" id="tabModules">
+                <div id="modulesContainer" class="row">
+                    <div class="text-center text-muted py-4"><i class="fa-solid fa-spinner fa-spin me-2"></i> Loading modules...</div>
+                </div>
+            </div>
+
+            <!-- 2. Checklists Tab -->
+            <div class="tab-pane fade" id="tabChecklists">
+                <div class="card p-4">
+                    <h5 class="fw-bold text-info mb-3"><i class="fa-solid fa-tasks me-2"></i> Mandatory Onboarding Checklists</h5>
+                    <div id="checklistsContainer" class="list-group list-group-flush bg-transparent">
+                        <div class="text-muted text-center py-3">Loading checklists...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Practical Tasks Tab -->
+            <div class="tab-pane fade" id="tabTasks">
+                <div id="tasksContainer" class="row">
+                    <div class="text-center text-muted py-4">Loading practical tasks...</div>
+                </div>
+            </div>
+
+            <!-- 4. Recommendations Tab -->
+            <div class="tab-pane fade" id="tabRecommendations">
+                <div class="card p-4">
+                    <h5 class="fw-bold text-warning mb-3"><i class="fa-solid fa-robot me-2"></i> Adaptive Performance Recommendations</h5>
+                    <div id="recommendationsContainer">
+                        <div class="text-muted text-center py-3">No active performance recommendations.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. Milestones Tab -->
+            <div class="tab-pane fade" id="tabMilestones">
+                <div class="card p-4">
+                    <h5 class="fw-bold text-success mb-3"><i class="fa-solid fa-trophy me-2"></i> Stage Milestones</h5>
+                    <div id="milestonesContainer" class="row">
+                        <div class="text-muted text-center py-3">Loading milestones...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quiz Modal -->
+    <div class="modal fade" id="quizModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content bg-dark text-light border-secondary">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title" id="quizModalTitle"><i class="fa-solid fa-circle-question text-info me-2"></i> Module Knowledge Assessment</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="activeQuizId">
+                    <h5 class="fw-bold mb-3 text-light" id="quizQuestionText">Loading quiz question...</h5>
+                    <div id="quizOptionsContainer" class="d-grid gap-2 mb-4">
+                        <!-- Loaded dynamically -->
+                    </div>
+                    <div id="quizFeedbackBox" class="alert d-none">
+                        <!-- Loaded dynamically -->
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="submitQuizBtn" onclick="submitQuiz()">Submit Answer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', loadDashboard);
+
+        async function loadDashboard() {
+            try {
+                const res = await fetch('/api/employee/me/dashboard');
+                const data = await res.json();
+
+                // Profile
+                document.getElementById('empName').innerText = data.employee_name;
+                document.getElementById('empRole').innerText = `${data.role_title} (${data.role_code})`;
+                document.getElementById('empDept').innerText = data.department;
+
+                // Status Pill
+                const statusBadge = document.getElementById('statusBadge');
+                const st = data.overall_status;
+                statusBadge.className = `badge badge-status status-${st}`;
+                statusBadge.innerText = st.replace('_', ' ');
+
+                // Metrics
+                document.getElementById('overallPct').innerText = `${data.overall_progress_percentage}%`;
+                document.getElementById('overallProgressBar').style.width = `${data.overall_progress_percentage}%`;
+                document.getElementById('modulesRatio').innerText = `${data.completed_modules_count} / ${data.assigned_modules_count}`;
+                document.getElementById('currentStageText').innerText = `Current Stage: ${data.current_stage.toUpperCase()}`;
+                document.getElementById('tasksRatio').innerText = `${data.completed_tasks_count} / ${data.total_tasks_count}`;
+                document.getElementById('chkPctText').innerText = `Checklists: ${data.checklist_completion_percentage}%`;
+                document.getElementById('quizScoreText').innerText = `${data.quiz_assessment_score}%`;
+
+                // Load Sub-views
+                loadModules();
+                loadChecklists();
+                loadTasks();
+                renderRecommendations(data.recommendations);
+                renderMilestones(data.milestones);
+            } catch (err) {
+                console.error('Error loading dashboard:', err);
+            }
+        }
+
+        async function loadModules() {
+            const container = document.getElementById('modulesContainer');
+            try {
+                const res = await fetch('/api/employee/me/modules');
+                const modules = await res.json();
+
+                if (modules.length === 0) {
+                    container.innerHTML = '<div class="text-center text-muted py-4">No active learning modules assigned yet. Please wait for manager approval.</div>';
+                    return;
+                }
+
+                container.innerHTML = modules.map(m => {
+                    let statusBadge = `<span class="badge bg-secondary">Assigned</span>`;
+                    let actionBtn = `<button class="btn btn-sm btn-outline-info" onclick="startModule('${m.module_id}')"><i class="fa-solid fa-play me-1"></i> Start Module</button>`;
+                    
+                    if (m.completion_status === 'started') {
+                        statusBadge = `<span class="badge bg-warning text-dark">In Progress</span>`;
+                        actionBtn = `<button class="btn btn-sm btn-success" onclick="completeModule('${m.module_id}')"><i class="fa-solid fa-check me-1"></i> Mark Completed</button>`;
+                    } else if (m.completion_status === 'completed') {
+                        statusBadge = `<span class="badge bg-success">Completed</span>`;
+                        actionBtn = `<button class="btn btn-sm btn-outline-success" disabled><i class="fa-solid fa-circle-check me-1"></i> Done</button>`;
+                    }
+
+                    return `
+                        <div class="col-md-6 mb-3">
+                            <div class="card p-3 module-card">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="fw-bold text-info">[${m.module_code}] ${m.title}</span>
+                                    ${statusBadge}
+                                </div>
+                                <p class="small text-muted mb-2">${m.purpose}</p>
+                                <div class="small text-secondary mb-3">
+                                    <i class="fa-solid fa-clock me-1"></i> ${m.estimated_duration_minutes} mins | 
+                                    <i class="fa-solid fa-file-lines me-1"></i> Doc: ${m.source_document_id} (${m.source_section_id})
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>${actionBtn}</div>
+                                    <button class="btn btn-sm btn-outline-primary ms-1" onclick="openQuiz('${m.module_id}')"><i class="fa-solid fa-question-circle me-1"></i> Take Quiz</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                container.innerHTML = `<div class="text-danger py-4">Error loading modules: ${err.message}</div>`;
+            }
+        }
+
+        async function startModule(modId) {
+            await fetch(`/api/employee/me/modules/${modId}/start`, { method: 'POST' });
+            loadDashboard();
+        }
+
+        async function completeModule(modId) {
+            await fetch(`/api/employee/me/modules/${modId}/complete`, { method: 'POST' });
+            loadDashboard();
+        }
+
+        async function loadChecklists() {
+            const container = document.getElementById('checklistsContainer');
+            const res = await fetch('/api/employee/me/checklists');
+            const checklists = await res.json();
+
+            if (checklists.length === 0) {
+                container.innerHTML = '<div class="text-muted text-center py-3">No checklists assigned.</div>';
+                return;
+            }
+
+            container.innerHTML = checklists.map(c => `
+                <div class="list-group-item bg-dark text-light border-secondary d-flex justify-content-between align-items-center py-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="chk_${c.checklist_id}" ${c.is_completed ? 'checked disabled' : ''} onchange="completeChecklist('${c.checklist_id}')">
+                        <label class="form-check-label fw-bold ${c.is_completed ? 'text-decoration-line-through text-muted' : ''}" for="chk_${c.checklist_id}">
+                            ${c.activity_name}
+                        </label>
+                    </div>
+                    <span class="badge bg-secondary">${c.due_stage.toUpperCase()}</span>
+                </div>
+            `).join('');
+        }
+
+        async function completeChecklist(chkId) {
+            await fetch(`/api/employee/me/checklists/${chkId}/complete`, { method: 'POST' });
+            loadDashboard();
+        }
+
+        async function loadTasks() {
+            const container = document.getElementById('tasksContainer');
+            const res = await fetch('/api/employee/me/tasks');
+            const tasks = await res.json();
+
+            if (tasks.length === 0) {
+                container.innerHTML = '<div class="text-muted text-center py-4">No practical tasks assigned.</div>';
+                return;
+            }
+
+            container.innerHTML = tasks.map(t => `
+                <div class="col-md-6 mb-3">
+                    <div class="card p-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-bold text-warning">[${t.task_code}] Practical Task</span>
+                            <span class="badge bg-${t.status === 'completed' ? 'success' : 'secondary'}">${t.status.toUpperCase()}</span>
+                        </div>
+                        <p class="small mb-2">${t.description}</p>
+                        <div class="small text-muted mb-3"><strong>Expected Outcome:</strong> ${t.expected_outcome}</div>
+                        ${t.status !== 'completed' ? `
+                            <button class="btn btn-sm btn-outline-warning w-100" onclick="completeTask('${t.task_id}')"><i class="fa-solid fa-check me-1"></i> Complete Practical Task</button>
+                        ` : `<div class="text-success small fw-bold"><i class="fa-solid fa-circle-check me-1"></i> Practical Task Completed</div>`}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function completeTask(taskId) {
+            const notes = prompt('Enter submission notes / evidence link:');
+            await fetch(`/api/employee/me/tasks/${taskId}/complete?notes=${encodeURIComponent(notes || '')}`, { method: 'POST' });
+            loadDashboard();
+        }
+
+        async function openQuiz(modId) {
+            // Find quiz for module or mock
+            document.getElementById('activeQuizId').value = modId;
+            const res = await fetch(`/api/employee/me/quizzes/${modId}`).catch(() => null);
+            let quiz = null;
+            if (res && res.ok) quiz = await res.json();
+
+            if (!quiz) {
+                // Fallback mock quiz structure for module
+                quiz = {
+                    quiz_id: modId,
+                    question_text: "What is the mandatory compliance requirement standard for this module?",
+                    options: [
+                        { option_label: "A", option_text: "Must comply with company policy procedures." },
+                        { option_label: "B", option_text: "Informal process option." }
+                    ]
+                };
+            }
+
+            document.getElementById('activeQuizId').value = quiz.quiz_id;
+            document.getElementById('quizQuestionText').innerText = quiz.question_text;
+            document.getElementById('quizFeedbackBox').className = 'alert d-none';
+
+            const optsContainer = document.getElementById('quizOptionsContainer');
+            optsContainer.innerHTML = quiz.options.map(o => `
+                <button type="button" class="btn btn-outline-info text-start" onclick="selectQuizOption('${o.option_label}', this)">
+                    <span class="fw-bold me-2">${o.option_label}.</span> ${o.option_text}
+                </button>
+            `).join('');
+
+            new bootstrap.Modal(document.getElementById('quizModal')).show();
+        }
+
+        let selectedOption = null;
+        function selectQuizOption(lbl, btn) {
+            selectedOption = lbl;
+            document.querySelectorAll('#quizOptionsContainer button').forEach(b => b.classList.replace('btn-info', 'btn-outline-info'));
+            btn.classList.replace('btn-outline-info', 'btn-info');
+        }
+
+        async function submitQuiz() {
+            if (!selectedOption) {
+                alert('Please select an option answer!');
+                return;
+            }
+            const qId = document.getElementById('activeQuizId').value;
+            const res = await fetch(`/api/employee/me/quizzes/${qId}/submit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ selected_option_label: selectedOption })
+            });
+            const result = await res.json();
+            const box = document.getElementById('quizFeedbackBox');
+            box.classList.remove('d-none', 'alert-success', 'alert-danger');
+
+            if (result.passed) {
+                box.classList.add('alert-success');
+                box.innerHTML = `<i class="fa-solid fa-circle-check me-2"></i> PASSED! Score: ${result.score}%. Explanation: ${result.explanation}`;
+            } else {
+                box.classList.add('alert-danger');
+                box.innerHTML = `<i class="fa-solid fa-triangle-exclamation me-2"></i> FAILED. Score: ${result.score}%. Correct Answer: ${result.correct_answer}. Explanation: ${result.explanation}`;
+            }
+            loadDashboard();
+        }
+
+        function renderRecommendations(recs) {
+            const container = document.getElementById('recommendationsContainer');
+            if (!recs || recs.length === 0) {
+                container.innerHTML = '<div class="text-muted text-center py-3">No weak areas detected. You are performing great!</div>';
+                return;
+            }
+            container.innerHTML = recs.map(r => `
+                <div class="card p-3 bg-dark border-warning mb-2">
+                    <div class="fw-bold text-warning"><i class="fa-solid fa-lightbulb me-2"></i> ${r.recommendation_type}: ${r.recommended_action}</div>
+                    <div class="small text-muted mt-1">${r.reason}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderMilestones(ms) {
+            const container = document.getElementById('milestonesContainer');
+            if (!ms || ms.length === 0) {
+                container.innerHTML = '<div class="text-muted text-center py-3">No milestones defined.</div>';
+                return;
+            }
+            container.innerHTML = ms.map(m => `
+                <div class="col-md-4 mb-3">
+                    <div class="card p-3 text-center border-${m.is_reached ? 'success' : 'secondary'}">
+                        <i class="fa-solid fa-flag-checkered fa-2x text-${m.is_reached ? 'success' : 'muted'} mb-2"></i>
+                        <h6 class="fw-bold">${m.title}</h6>
+                        <div class="small text-muted">Target: ${m.target_completion_days} Days</div>
+                        <span class="badge bg-${m.is_reached ? 'success' : 'secondary'} mt-2">${m.is_reached ? 'REACHED' : 'PENDING'}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>

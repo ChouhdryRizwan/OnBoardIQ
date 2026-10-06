@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OnBoardIQ — Pipeline 2 Python Ground-Truth Validation Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .badge-verified { background-color: #10b981; color: white; }
+        .badge-warning { background-color: #f59e0b; color: white; }
+        .badge-missing { background-color: #ef4444; color: white; }
+        .badge-contradiction { background-color: #dc2626; color: white; }
+        .badge-review { background-color: #8b5cf6; color: white; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800">
+
+    <!-- Header Navigation -->
+    <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-emerald-600 p-2 rounded-lg text-xl font-bold">🛡️</div>
+                <div>
+                    <h1 class="text-xl font-extrabold tracking-tight">OnBoardIQ</h1>
+                    <p class="text-xs text-emerald-400">Pipeline 2 — Deterministic Python Ground-Truth Engine</p>
+                </div>
+            </div>
+            <nav class="flex space-x-2 text-sm font-medium">
+                <a href="/admin/documents" class="px-3 py-2 rounded-md hover:bg-slate-800 transition">Company Documents</a>
+                <a href="/admin/rrm" class="px-3 py-2 rounded-md hover:bg-slate-800 transition">Role Requirement Matrix</a>
+                <a href="/admin/pipeline1" class="px-3 py-2 rounded-md hover:bg-slate-800 transition">Pipeline 1 (GenAI)</a>
+                <a href="/admin/pipeline2" class="px-3 py-2 rounded-md bg-emerald-700 text-white font-semibold">Pipeline 2 (Validation)</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 py-8">
+
+        <!-- Banner Alert -->
+        <div class="bg-emerald-50 border-l-4 border-emerald-600 p-4 rounded-r-lg mb-8 shadow-sm flex items-start justify-between">
+            <div class="flex items-start space-x-3">
+                <i class="fa-solid fa-shield-halved text-emerald-600 text-xl mt-1"></i>
+                <div>
+                    <h3 class="font-bold text-emerald-900">Pipeline 2 — 100% Deterministic Python Verification Subsystem</h3>
+                    <p class="text-sm text-emerald-700 mt-1">
+                        Pipeline 2 operates strictly without GenAI or LLM calls. It audits Pipeline 1 onboarding plans against ground-truth RRM rules, computes coverage and traceability scores, flags discrepancies, and routes non-verified plans to the human review queue.
+                    </p>
+                </div>
+            </div>
+            <span class="bg-emerald-200 text-emerald-800 text-xs font-bold px-2.5 py-1 rounded">Independent Python Engine</span>
+        </div>
+
+        <!-- Plan Selection & Action Bar -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-8 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center space-x-4 flex-1 min-w-[280px]">
+                <label class="text-xs font-bold text-slate-600 uppercase">Select Generated Plan</label>
+                <select id="selectPlan" class="flex-1 border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500">
+                    <option value="">-- Choose Plan to Validate --</option>
+                </select>
+            </div>
+
+            <button onclick="triggerValidation()" id="btnValidate" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-5 rounded-lg shadow transition flex items-center space-x-2">
+                <i class="fa-solid fa-play"></i>
+                <span>Run Pipeline 2 Deterministic Validation</span>
+            </button>
+        </div>
+
+        <!-- Validation Results Section -->
+        <div id="resultsSection" class="hidden space-y-8">
+            
+            <!-- Overall Status Header Card -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <span class="text-xs font-semibold text-slate-500 uppercase">Validation Run Evaluation Status</span>
+                    <div class="flex items-center space-x-3 mt-1">
+                        <span id="badgeOverallStatus" class="px-4 py-1.5 rounded-full text-sm font-bold shadow-sm"></span>
+                        <span id="lblEvaluatedAt" class="text-xs text-slate-500"></span>
+                    </div>
+                </div>
+
+                <div class="flex space-x-6 text-center">
+                    <div>
+                        <span class="text-xs text-slate-500 uppercase font-medium">Mandatory Coverage</span>
+                        <p id="lblCoverageScore" class="text-2xl font-black text-emerald-600">0%</p>
+                    </div>
+                    <div class="border-l border-slate-200 pl-6">
+                        <span class="text-xs text-slate-500 uppercase font-medium">Source Traceability</span>
+                        <p id="lblTraceabilityScore" class="text-2xl font-black text-blue-600">0%</p>
+                    </div>
+                    <div class="border-l border-slate-200 pl-6">
+                        <span class="text-xs text-slate-500 uppercase font-medium">Consistency Score</span>
+                        <p id="lblConsistencyScore" class="text-2xl font-black text-purple-600">0%</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Metric Cards Grid -->
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm text-center">
+                    <span class="text-[11px] font-bold text-slate-500 uppercase">Total Mandatory</span>
+                    <p id="metricTotalMandatory" class="text-xl font-bold text-slate-800 mt-1">0</p>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm text-center">
+                    <span class="text-[11px] font-bold text-slate-500 uppercase">Covered Mandatory</span>
+                    <p id="metricCoveredMandatory" class="text-xl font-bold text-emerald-600 mt-1">0</p>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm text-center">
+                    <span class="text-[11px] font-bold text-slate-500 uppercase">Missing Mandatory</span>
+                    <p id="metricMissingMandatory" class="text-xl font-bold text-red-600 mt-1">0</p>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm text-center">
+                    <span class="text-[11px] font-bold text-slate-500 uppercase">Unsupported Content</span>
+                    <p id="metricUnsupported" class="text-xl font-bold text-amber-600 mt-1">0</p>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm text-center">
+                    <span class="text-[11px] font-bold text-slate-500 uppercase">Contradictions</span>
+                    <p id="metricContradictions" class="text-xl font-bold text-purple-600 mt-1">0</p>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm text-center">
+                    <span class="text-[11px] font-bold text-slate-500 uppercase">Duplicates</span>
+                    <p id="metricDuplicates" class="text-xl font-bold text-slate-600 mt-1">0</p>
+                </div>
+            </div>
+
+            <!-- Comparison Table Section -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="bg-slate-100 border-b border-slate-200 px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+                    <h3 class="font-bold text-slate-800 text-base flex items-center space-x-2">
+                        <i class="fa-solid fa-code-compare text-emerald-600"></i>
+                        <span>Ground Truth vs Pipeline 1 Generated Comparison</span>
+                    </h3>
+
+                    <!-- Table Filters -->
+                    <div class="flex space-x-3 text-xs">
+                        <select id="filterMatch" onchange="renderComparisonTable()" class="border border-slate-300 rounded p-1.5 bg-white font-medium">
+                            <option value="all">All Items</option>
+                            <option value="match">Match Only</option>
+                            <option value="mismatch">Mismatch Only</option>
+                            <option value="missing">Missing Only</option>
+                            <option value="unsupported">Unsupported Only</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-600 border-b">
+                                <th class="p-3.5 font-semibold">Requirement ID</th>
+                                <th class="p-3.5 font-semibold">Role Code</th>
+                                <th class="p-3.5 font-semibold">Python Expected (RRM Ground Truth)</th>
+                                <th class="p-3.5 font-semibold">GenAI Output (Pipeline 1)</th>
+                                <th class="p-3.5 font-semibold">Match Result</th>
+                                <th class="p-3.5 font-semibold">Validation Status</th>
+                                <th class="p-3.5 font-semibold">Audit Explanation</th>
+                            </tr>
+                        </thead>
+                        <tbody id="comparisonTableBody" class="divide-y"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Discrepancy Issues Log -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="font-bold text-slate-800 text-base mb-4 flex items-center space-x-2">
+                    <i class="fa-solid fa-triangle-exclamation text-amber-500"></i>
+                    <span>Validation Issues & Discrepancies Audit Log</span>
+                </h3>
+                <div class="space-y-3" id="issuesContainer"></div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <script>
+        let currentReport = null;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            loadPlans();
+        });
+
+        async function loadPlans() {
+            try {
+                const res = await fetch("/api/pipeline1/plan/list_all_plans_mock_fallback");
+                // Fallback to searching active employees/plans
+                const empRes = await fetch("/api/employees");
+                const emps = await empRes.json();
+                
+                const sel = document.getElementById("selectPlan");
+                sel.innerHTML = '<option value="">-- Choose Plan to Validate --</option>';
+
+                for (let emp of emps) {
+                    try {
+                        const planRes = await fetch(`/api/pipeline1/plan/${emp.employee_id}`);
+                        if (planRes.ok) {
+                            const plan = await planRes.json();
+                            sel.innerHTML += `<option value="${plan.plan_id}">${plan.plan_id} — ${emp.name} (${plan.role_code})</option>`;
+                        }
+                    } catch (e) {}
+                }
+            } catch (err) {
+                console.error("Failed loading plans:", err);
+            }
+        }
+
+        async function triggerValidation() {
+            const planId = document.getElementById("selectPlan").value;
+            if (!planId) {
+                alert("Please select an onboarding plan first.");
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/pipeline2/validate/${planId}`, {
+                    method: "POST"
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    alert("Validation failed: " + (data.detail || JSON.stringify(data)));
+                    return;
+                }
+
+                currentReport = data;
+                renderValidationResults(data);
+                document.getElementById("resultsSection").classList.remove("hidden");
+            } catch (err) {
+                alert("API Error calling Pipeline 2: " + err.message);
+            }
+        }
+
+        function renderValidationResults(data) {
+            // Render Overall Status Badge
+            const badge = document.getElementById("badgeOverallStatus");
+            const st = data.verification_status;
+            badge.innerText = st.toUpperCase().replace(/_/g, ' ');
+
+            if (st === 'verified') badge.className = 'px-4 py-1.5 rounded-full text-sm font-bold shadow-sm badge-verified';
+            else if (st === 'verified_with_warning') badge.className = 'px-4 py-1.5 rounded-full text-sm font-bold shadow-sm badge-warning';
+            else if (st === 'requirement_missing' || st === 'source_support_missing') badge.className = 'px-4 py-1.5 rounded-full text-sm font-bold shadow-sm badge-missing';
+            else if (st === 'contradiction_detected') badge.className = 'px-4 py-1.5 rounded-full text-sm font-bold shadow-sm badge-contradiction';
+            else badge.className = 'px-4 py-1.5 rounded-full text-sm font-bold shadow-sm badge-review';
+
+            document.getElementById("lblEvaluatedAt").innerText = data.evaluated_at ? `Evaluated: ${data.evaluated_at.substring(0, 19)}` : '';
+
+            // Scores
+            document.getElementById("lblCoverageScore").innerText = `${data.mandatory_coverage_score}%`;
+            document.getElementById("lblTraceabilityScore").innerText = `${data.source_traceability_score}%`;
+            document.getElementById("lblConsistencyScore").innerText = `${data.consistency_score}%`;
+
+            // Metrics
+            document.getElementById("metricTotalMandatory").innerText = data.total_mandatory_requirements;
+            document.getElementById("metricCoveredMandatory").innerText = data.covered_mandatory_requirements;
+            document.getElementById("metricMissingMandatory").innerText = data.missing_requirements_count;
+            document.getElementById("metricUnsupported").innerText = data.unsupported_requirements_count;
+            document.getElementById("metricContradictions").innerText = data.contradiction_count;
+            document.getElementById("metricDuplicates").innerText = data.duplicate_count;
+
+            renderComparisonTable();
+            renderIssuesLog(data);
+        }
+
+        function renderComparisonTable() {
+            if (!currentReport || !currentReport.comparison_details) return;
+            const filter = document.getElementById("filterMatch").value;
+            const body = document.getElementById("comparisonTableBody");
+
+            const items = currentReport.comparison_details.filter(cd => {
+                if (filter === 'all') return true;
+                return cd.match_result.toLowerCase() === filter;
+            });
+
+            if (items.length === 0) {
+                body.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-slate-500">No comparison items match selected filter.</td></tr>';
+                return;
+            }
+
+            body.innerHTML = items.map(cd => `
+                <tr class="hover:bg-slate-50">
+                    <td class="p-3.5 font-mono font-bold text-indigo-700">${cd.requirement_id}</td>
+                    <td class="p-3.5 font-semibold text-slate-700">${cd.job_role_code}</td>
+                    <td class="p-3.5 font-mono text-slate-600">Doc: <strong>${cd.python_expected_source_doc || 'N/A'}</strong> (Sec: ${cd.python_expected_source_sec || 'N/A'})</td>
+                    <td class="p-3.5 font-mono text-slate-600">Doc: <strong>${cd.genai_output_source_doc || 'N/A'}</strong> (Sec: ${cd.genai_output_source_sec || 'N/A'})</td>
+                    <td class="p-3.5">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold text-white ${cd.match_result === 'match' ? 'bg-emerald-500' : 'bg-amber-500'}">
+                            ${cd.match_result.toUpperCase()}
+                        </span>
+                    </td>
+                    <td class="p-3.5 font-semibold text-slate-800">${cd.validation_status}</td>
+                    <td class="p-3.5 text-slate-600">${cd.disagreement_explanation}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderIssuesLog(data) {
+            const container = document.getElementById("issuesContainer");
+            const hFlags = data.hallucination_flags || [];
+            const cFlags = data.contradiction_flags || [];
+
+            if (hFlags.length === 0 && cFlags.length === 0) {
+                container.innerHTML = '<div class="p-4 bg-emerald-50 text-emerald-800 text-sm rounded-lg font-medium">Zero hallucination or contradiction flags detected. Plan meets ground-truth standards.</div>';
+                return;
+            }
+
+            let html = '';
+            hFlags.forEach(hf => {
+                html += `
+                    <div class="p-4 bg-red-50 border border-red-200 rounded-lg text-xs">
+                        <div class="flex justify-between font-bold text-red-900 mb-1">
+                            <span><i class="fa-solid fa-triangle-exclamation mr-1"></i> Source Support Missing</span>
+                            <span class="font-mono text-red-700">${hf.claimed_source_doc} / ${hf.claimed_source_sec}</span>
+                        </div>
+                        <p class="text-red-800">${hf.reason}</p>
+                        <p class="text-slate-600 mt-1 italic">${hf.flagged_statement}</p>
+                    </div>
+                `;
+            });
+
+            cFlags.forEach(cf => {
+                html += `
+                    <div class="p-4 bg-purple-50 border border-purple-200 rounded-lg text-xs">
+                        <div class="flex justify-between font-bold text-purple-900 mb-1">
+                            <span><i class="fa-solid fa-scale-unbalanced mr-1"></i> Policy Contradiction</span>
+                            <span>Rule: ${cf.applied_precedence_rule}</span>
+                        </div>
+                        <p class="text-purple-800">${cf.description}</p>
+                        <div class="mt-2 text-slate-600 flex justify-between border-t border-purple-100 pt-2">
+                            <span>Primary: <strong>${cf.primary_clause}</strong></span>
+                            <span>Conflicting: <strong>${cf.conflicting_clause}</strong></span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+    </script>
+</body>
+</html>

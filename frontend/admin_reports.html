@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OnBoardIQ — Reports & Analytics Workspace</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen font-sans">
+  
+  <!-- Header / Navigation -->
+  <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white text-xl">SS</div>
+        <div>
+          <h1 class="text-lg font-bold text-white leading-none">OnBoardIQ</h1>
+          <p class="text-xs text-indigo-400 mt-1">Reports & Analytics Engine (Phase 8)</p>
+        </div>
+      </div>
+      <nav class="flex items-center space-x-2 text-sm">
+        <a href="/admin/documents" class="px-3 py-2 rounded-md hover:bg-slate-700 text-slate-300">Documents</a>
+        <a href="/admin/rrm" class="px-3 py-2 rounded-md hover:bg-slate-700 text-slate-300">RRM</a>
+        <a href="/admin/pipeline1" class="px-3 py-2 rounded-md hover:bg-slate-700 text-slate-300">Pipeline 1</a>
+        <a href="/admin/pipeline2" class="px-3 py-2 rounded-md hover:bg-slate-700 text-slate-300">Pipeline 2</a>
+        <a href="/admin/human-review" class="px-3 py-2 rounded-md hover:bg-slate-700 text-slate-300">Human Review</a>
+        <a href="/employee/dashboard" class="px-3 py-2 rounded-md hover:bg-slate-700 text-slate-300">Employee</a>
+        <a href="/admin/policy-updates" class="px-3 py-2 rounded-md hover:bg-slate-700 text-slate-300">Policy Updates</a>
+        <a href="/admin/reports" class="px-3 py-2 rounded-md bg-indigo-600 font-semibold text-white">Reports</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- KPI Metrics Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8" id="kpi-grid">
+      <div class="bg-slate-800 p-5 rounded-xl border border-slate-700">
+        <div class="text-slate-400 text-xs font-semibold uppercase tracking-wider">Total Employees</div>
+        <div class="text-3xl font-bold text-white mt-1" id="metric-total-emp">--</div>
+        <div class="text-xs text-emerald-400 mt-2"><span id="metric-active-emp">--</span> Active Employees</div>
+      </div>
+      <div class="bg-slate-800 p-5 rounded-xl border border-slate-700">
+        <div class="text-slate-400 text-xs font-semibold uppercase tracking-wider">Active Training Plans</div>
+        <div class="text-3xl font-bold text-indigo-400 mt-1" id="metric-active-plans">--</div>
+        <div class="text-xs text-slate-400 mt-2"><span id="metric-completed-plans">--</span> Plans Completed</div>
+      </div>
+      <div class="bg-slate-800 p-5 rounded-xl border border-slate-700">
+        <div class="text-slate-400 text-xs font-semibold uppercase tracking-wider">Average Progress</div>
+        <div class="text-3xl font-bold text-emerald-400 mt-1" id="metric-avg-progress">--%</div>
+        <div class="text-xs text-amber-400 mt-2"><span id="metric-pending-reviews">--</span> Pending Reviews</div>
+      </div>
+      <div class="bg-slate-800 p-5 rounded-xl border border-slate-700">
+        <div class="text-slate-400 text-xs font-semibold uppercase tracking-wider">Validation & Policy Status</div>
+        <div class="text-3xl font-bold text-rose-400 mt-1" id="metric-val-failures">--</div>
+        <div class="text-xs text-slate-400 mt-2"><span id="metric-policy-changes">--</span> Policy Updates Recorded</div>
+      </div>
+    </div>
+
+    <!-- Controls & Filters Bar -->
+    <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 mb-6 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex flex-wrap items-center gap-3">
+        <input type="text" id="filter-search" placeholder="Search name, email, code..." class="bg-slate-900 border border-slate-700 px-3 py-2 rounded-lg text-sm w-64 focus:outline-none focus:border-indigo-500 text-white">
+        <input type="text" id="filter-dept" placeholder="Filter Department" class="bg-slate-900 border border-slate-700 px-3 py-2 rounded-lg text-sm w-44 focus:outline-none focus:border-indigo-500 text-white">
+        <input type="text" id="filter-role" placeholder="Filter Role Code" class="bg-slate-900 border border-slate-700 px-3 py-2 rounded-lg text-sm w-44 focus:outline-none focus:border-indigo-500 text-white">
+        <button onclick="applyFilters()" class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg text-sm font-semibold text-white flex items-center gap-2">
+          <i class="fa-solid fa-filter"></i> Apply
+        </button>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-slate-400">Export Active Filtered Data:</span>
+        <button onclick="exportReport('csv')" class="bg-emerald-700 hover:bg-emerald-600 px-3 py-1.5 rounded-md text-xs font-medium text-white">CSV</button>
+        <button onclick="exportReport('excel')" class="bg-blue-700 hover:bg-blue-600 px-3 py-1.5 rounded-md text-xs font-medium text-white">Excel</button>
+        <button onclick="exportReport('pdf')" class="bg-rose-700 hover:bg-rose-600 px-3 py-1.5 rounded-md text-xs font-medium text-white">HTML PDF</button>
+      </div>
+    </div>
+
+    <!-- Report Tabs -->
+    <div class="border-b border-slate-700 mb-6 flex space-x-4 overflow-x-auto text-sm">
+      <button onclick="switchTab('employee')" id="tab-employee" class="tab-btn py-3 px-4 font-semibold text-indigo-400 border-b-2 border-indigo-500">Employee Progress</button>
+      <button onclick="switchTab('role')" id="tab-role" class="tab-btn py-3 px-4 font-semibold text-slate-400 hover:text-slate-200">Role Coverage</button>
+      <button onclick="switchTab('mandatory')" id="tab-mandatory" class="tab-btn py-3 px-4 font-semibold text-slate-400 hover:text-slate-200">Mandatory Training</button>
+      <button onclick="switchTab('assessment')" id="tab-assessment" class="tab-btn py-3 px-4 font-semibold text-slate-400 hover:text-slate-200">Assessments</button>
+      <button onclick="switchTab('traceability')" id="tab-traceability" class="tab-btn py-3 px-4 font-semibold text-slate-400 hover:text-slate-200">Source Traceability</button>
+      <button onclick="switchTab('hallucination')" id="tab-hallucination" class="tab-btn py-3 px-4 font-semibold text-slate-400 hover:text-slate-200">Hallucinations</button>
+      <button onclick="switchTab('policy')" id="tab-policy" class="tab-btn py-3 px-4 font-semibold text-slate-400 hover:text-slate-200">Policy Coverage</button>
+      <button onclick="switchTab('comparison')" id="tab-comparison" class="tab-btn py-3 px-4 font-semibold text-slate-400 hover:text-slate-200">GenAI vs Python</button>
+    </div>
+
+    <!-- Report Data View Table -->
+    <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden shadow-xl">
+      <div class="p-4 border-b border-slate-700 flex justify-between items-center">
+        <h2 id="report-title" class="font-bold text-white text-base">Employee Learning Progress Report</h2>
+        <span id="report-count" class="text-xs text-slate-400 font-mono">0 items</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm text-slate-300">
+          <thead class="bg-slate-900/80 text-xs uppercase text-slate-400 border-b border-slate-700" id="table-head">
+            <!-- Headers injected dynamically -->
+          </thead>
+          <tbody id="table-body" class="divide-y divide-slate-700/50">
+            <tr><td colspan="8" class="p-8 text-center text-slate-500">Loading report data...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    let currentTab = 'employee';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadOverviewMetrics();
+      loadCurrentReport();
+    });
+
+    async function loadOverviewMetrics() {
+      try {
+        const res = await fetch('/api/reports/overview', { headers: { 'X-User-Role': 'admin' } });
+        if (res.ok) {
+          const data = await res.json();
+          document.getElementById('metric-total-emp').innerText = data.total_employees;
+          document.getElementById('metric-active-emp').innerText = data.active_employees;
+          document.getElementById('metric-active-plans').innerText = data.active_training_plans;
+          document.getElementById('metric-completed-plans').innerText = data.completed_plans;
+          document.getElementById('metric-avg-progress').innerText = data.average_progress_percentage + '%';
+          document.getElementById('metric-pending-reviews').innerText = data.pending_reviews;
+          document.getElementById('metric-val-failures').innerText = data.validation_failures;
+          document.getElementById('metric-policy-changes').innerText = data.policy_changes_count;
+        }
+      } catch (err) {
+        console.error('Failed to load overview metrics:', err);
+      }
+    }
+
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('text-indigo-400', 'border-b-2', 'border-indigo-500');
+        btn.classList.add('text-slate-400');
+      });
+      const activeBtn = document.getElementById(`tab-${tab}`);
+      if (activeBtn) {
+        activeBtn.classList.remove('text-slate-400');
+        activeBtn.classList.add('text-indigo-400', 'border-b-2', 'border-indigo-500');
+      }
+      loadCurrentReport();
+    }
+
+    function applyFilters() {
+      loadCurrentReport();
+    }
+
+    async function loadCurrentReport() {
+      const search = document.getElementById('filter-search').value;
+      const dept = document.getElementById('filter-dept').value;
+      const role = document.getElementById('filter-role').value;
+      
+      const queryParams = new URLSearchParams();
+      if (search) queryParams.append('search', search);
+      if (dept) queryParams.append('department', dept);
+      if (role) queryParams.append('role_code', role);
+
+      const thead = document.getElementById('table-head');
+      const tbody = document.getElementById('table-body');
+      const title = document.getElementById('report-title');
+      const count = document.getElementById('report-count');
+
+      tbody.innerHTML = '<tr><td colspan="8" class="p-8 text-center text-slate-500">Loading report data...</td></tr>';
+
+      try {
+        let endpoint = `/api/reports/employee-progress?${queryParams.toString()}`;
+        if (currentTab === 'role') endpoint = `/api/reports/role-coverage?${queryParams.toString()}`;
+        else if (currentTab === 'mandatory') endpoint = `/api/reports/mandatory-training?${queryParams.toString()}`;
+        else if (currentTab === 'assessment') endpoint = `/api/reports/assessments?${queryParams.toString()}`;
+        else if (currentTab === 'traceability') endpoint = `/api/reports/traceability?${queryParams.toString()}`;
+        else if (currentTab === 'hallucination') endpoint = `/api/reports/hallucinations?${queryParams.toString()}`;
+        else if (currentTab === 'policy') endpoint = `/api/reports/policy-coverage?${queryParams.toString()}`;
+        else if (currentTab === 'comparison') endpoint = `/api/reports/genai-vs-python?${queryParams.toString()}`;
+
+        const res = await fetch(endpoint, { headers: { 'X-User-Role': 'admin' } });
+        if (!res.ok) throw new Error('Failed to fetch report');
+        const data = await res.json();
+
+        renderReportTable(currentTab, data, thead, tbody, title, count);
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-rose-400">Error loading report: ${err.message}</td></tr>`;
+      }
+    }
+
+    function renderReportTable(tab, data, thead, tbody, title, count) {
+      if (tab === 'employee') {
+        title.innerText = 'Employee Learning Progress Report';
+        count.innerText = `${data.total || data.items?.length || 0} employees`;
+        thead.innerHTML = `<tr>
+          <th class="p-3">Employee</th>
+          <th class="p-3">Department</th>
+          <th class="p-3">Role Code</th>
+          <th class="p-3">Plan Version</th>
+          <th class="p-3">Progress</th>
+          <th class="p-3">Modules</th>
+          <th class="p-3">Status</th>
+        </tr>`;
+        tbody.innerHTML = (data.items || []).map(item => `
+          <tr class="hover:bg-slate-700/30">
+            <td class="p-3 font-semibold text-white">${item.employee_name}<br><span class="text-xs text-slate-400">${item.email}</span></td>
+            <td class="p-3">${item.department}</td>
+            <td class="p-3 font-mono text-xs">${item.role_code}</td>
+            <td class="p-3">${item.plan_version}</td>
+            <td class="p-3">
+              <div class="flex items-center gap-2">
+                <div class="w-16 bg-slate-700 h-2 rounded-full overflow-hidden">
+                  <div class="bg-emerald-500 h-full" style="width: ${item.overall_progress_percentage}%"></div>
+                </div>
+                <span class="text-xs font-mono">${item.overall_progress_percentage}%</span>
+              </div>
+            </td>
+            <td class="p-3 text-xs">${item.completed_modules}/${item.total_modules}</td>
+            <td class="p-3"><span class="px-2 py-1 rounded text-xs font-semibold bg-emerald-900/60 text-emerald-300 border border-emerald-700/50">${item.current_status}</span></td>
+          </tr>
+        `).join('') || '<tr><td colspan="7" class="p-8 text-center text-slate-500">No records found.</td></tr>';
+      } else if (tab === 'role') {
+        title.innerText = 'Role Requirement Matrix Coverage Report';
+        count.innerText = `${data.length} roles`;
+        thead.innerHTML = `<tr>
+          <th class="p-3">Role Code</th>
+          <th class="p-3">Title</th>
+          <th class="p-3">Department</th>
+          <th class="p-3">Total Requirements</th>
+          <th class="p-3">Covered</th>
+          <th class="p-3">Coverage %</th>
+          <th class="p-3">Status</th>
+        </tr>`;
+        tbody.innerHTML = data.map(item => `
+          <tr class="hover:bg-slate-700/30">
+            <td class="p-3 font-mono text-xs text-indigo-400">${item.role_code}</td>
+            <td class="p-3 font-semibold text-white">${item.role_title}</td>
+            <td class="p-3">${item.department}</td>
+            <td class="p-3">${item.total_rrm_requirements} (${item.mandatory_requirements} mandatory)</td>
+            <td class="p-3">${item.covered_requirements}</td>
+            <td class="p-3 font-mono font-bold text-emerald-400">${item.coverage_percentage}%</td>
+            <td class="p-3"><span class="px-2 py-1 rounded text-xs font-semibold bg-blue-900/60 text-blue-300">${item.outdated_status}</span></td>
+          </tr>
+        `).join('') || '<tr><td colspan="7" class="p-8 text-center text-slate-500">No role records found.</td></tr>';
+      } else {
+        title.innerText = `${tab.toUpperCase()} Report`;
+        count.innerText = `${data.length || data.items?.length || 0} items`;
+        thead.innerHTML = `<tr><th class="p-3">Item Data Summary</th></tr>`;
+        const items = data.items || data;
+        tbody.innerHTML = (Array.isArray(items) ? items : []).map(i => `
+          <tr class="hover:bg-slate-700/30"><td class="p-3 font-mono text-xs text-slate-300"><pre>${JSON.stringify(i, null, 2)}</pre></td></tr>
+        `).join('') || '<tr><td class="p-8 text-center text-slate-500">No items available.</td></tr>';
+      }
+    }
+
+    function exportReport(fmt) {
+      const search = document.getElementById('filter-search').value;
+      const dept = document.getElementById('filter-dept').value;
+      const role = document.getElementById('filter-role').value;
+
+      const params = new URLSearchParams({
+        report_type: currentTab,
+        export_format: fmt
+      });
+      if (search) params.append('search', search);
+      if (dept) params.append('department', dept);
+      if (role) params.append('role_code', role);
+
+      window.open(`/api/reports/export?${params.toString()}`, '_blank');
+    }
+  </script>
+</body>
+</html>

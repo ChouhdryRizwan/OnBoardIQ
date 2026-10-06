@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OnBoardIQ — Admin Role Requirement Matrix (RRM)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #0f172a; color: #f8fafc; font-family: ui-sans-serif, system-ui, sans-serif; }
+        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .badge-mandatory { background-color: #065f46; color: #34d399; }
+        .badge-optional { background-color: #1e293b; color: #94a3b8; border: 1px solid #334155; }
+        .badge-prio-high { background-color: #7f1d1d; color: #fca5a5; }
+        .badge-prio-medium { background-color: #78350f; color: #fde68a; }
+        .badge-prio-low { background-color: #064e3b; color: #a7f3d0; }
+    </style>
+</head>
+<body class="min-h-screen pb-12">
+    <!-- Header -->
+    <header class="border-b border-slate-800 bg-slate-900/80 sticky top-0 z-40 backdrop-blur">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-indigo-600 text-white p-2 rounded-lg font-bold text-xl">
+                    <i class="fa-solid fa-layer-group"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-white tracking-wide">OnBoardIQ — RRM Engine</h1>
+                    <p class="text-xs text-slate-400">Ground-Truth Role Requirement Matrix Management</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <a href="/admin/documents" class="text-xs text-slate-400 hover:text-white flex items-center space-x-1">
+                    <i class="fa-solid fa-folder"></i> <span>Document Management</span>
+                </a>
+                <button onclick="openCreateRoleModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-2 rounded-lg text-xs font-semibold transition">
+                    <i class="fa-solid fa-user-plus mr-1"></i> Add Role
+                </button>
+                <button onclick="openCreateReqModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center space-x-2">
+                    <i class="fa-solid fa-plus-circle"></i>
+                    <span>Add Requirement</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 pt-8">
+        <!-- Dashboard Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="glass-card p-5 rounded-xl flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Active Roles</p>
+                    <h3 id="statTotalRoles" class="text-2xl font-bold text-white mt-1">0</h3>
+                </div>
+                <div class="w-12 h-12 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-id-badge"></i>
+                </div>
+            </div>
+            <div class="glass-card p-5 rounded-xl flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Requirements</p>
+                    <h3 id="statTotalReqs" class="text-2xl font-bold text-white mt-1">0</h3>
+                </div>
+                <div class="w-12 h-12 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-list-check"></i>
+                </div>
+            </div>
+            <div class="glass-card p-5 rounded-xl flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Mandatory Requirements</p>
+                    <h3 id="statMandatoryReqs" class="text-2xl font-bold text-emerald-400 mt-1">0</h3>
+                </div>
+                <div class="w-12 h-12 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                </div>
+            </div>
+            <div class="glass-card p-5 rounded-xl flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">High Priority</p>
+                    <h3 id="statHighPrioReqs" class="text-2xl font-bold text-rose-400 mt-1">0</h3>
+                </div>
+                <div class="w-12 h-12 rounded-lg bg-rose-500/10 text-rose-400 flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-fire"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Controls Bar -->
+        <div class="glass-card p-4 rounded-xl mb-6 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center space-x-3 flex-1 min-w-[280px]">
+                <div class="relative w-full">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-sm"></i>
+                    <input type="text" id="searchInput" oninput="loadRequirements()" placeholder="Search Requirement ID, Competency, or Policy..." class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-9 pr-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                </div>
+            </div>
+            <div class="flex items-center space-x-3 flex-wrap gap-2">
+                <select id="roleFilter" onchange="loadRequirements()" class="bg-slate-900 border border-slate-700 text-slate-300 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
+                    <option value="">All Roles</option>
+                </select>
+                <select id="mandatoryFilter" onchange="loadRequirements()" class="bg-slate-900 border border-slate-700 text-slate-300 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
+                    <option value="">All Mandatory</option>
+                    <option value="true">Mandatory Only</option>
+                    <option value="false">Optional Only</option>
+                </select>
+                <select id="classificationFilter" onchange="loadRequirements()" class="bg-slate-900 border border-slate-700 text-slate-300 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
+                    <option value="">All Classifications</option>
+                    <option value="must_know">Must Know</option>
+                    <option value="must_complete">Must Complete</option>
+                    <option value="must_demonstrate">Must Demonstrate</option>
+                    <option value="must_acknowledge">Must Acknowledge</option>
+                    <option value="recommended">Recommended</option>
+                    <option value="optional">Optional</option>
+                </select>
+                <select id="priorityFilter" onchange="loadRequirements()" class="bg-slate-900 border border-slate-700 text-slate-300 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
+                    <option value="">All Priorities</option>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Requirements Table -->
+        <div class="glass-card rounded-xl overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-300">
+                    <thead class="bg-slate-800/80 text-xs uppercase tracking-wider text-slate-400 border-b border-slate-700">
+                        <tr>
+                            <th class="px-6 py-4">Req ID / Title</th>
+                            <th class="px-6 py-4">Role</th>
+                            <th class="px-6 py-4">Competency</th>
+                            <th class="px-6 py-4">Classification</th>
+                            <th class="px-6 py-4">Status</th>
+                            <th class="px-6 py-4">Priority</th>
+                            <th class="px-6 py-4">Source Traceability</th>
+                            <th class="px-6 py-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="requirementsTableBody" class="divide-y divide-slate-800">
+                        <tr>
+                            <td colspan="8" class="text-center py-8 text-slate-500">Loading ground-truth requirements...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Create Requirement Modal -->
+    <div id="reqModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-card bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-3xl overflow-hidden shadow-2xl">
+            <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+                <h3 id="reqModalTitle" class="text-lg font-bold text-white flex items-center space-x-2">
+                    <i class="fa-solid fa-file-signature text-indigo-400"></i>
+                    <span>Add Ground-Truth Requirement</span>
+                </h3>
+                <button onclick="closeReqModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="reqForm" onsubmit="handleReqSubmit(event)" class="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Requirement ID *</label>
+                        <input type="text" id="formReqId" required placeholder="e.g. REQ-CS-001" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Target Job Role *</label>
+                        <select id="formReqRole" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500"></select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Title *</label>
+                    <input type="text" id="formReqTitle" required placeholder="e.g. Escalation SLA Adherence" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Policy / Compliance Requirement *</label>
+                    <textarea id="formReqPolicy" rows="2" required placeholder="State exact policy clause requirement..." class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500"></textarea>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Required Competency *</label>
+                        <input type="text" id="formReqCompetency" required placeholder="e.g. Escalation Management" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Classification *</label>
+                        <select id="formReqClass" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500">
+                            <option value="must_know">Must Know</option>
+                            <option value="must_complete">Must Complete</option>
+                            <option value="must_demonstrate">Must Demonstrate</option>
+                            <option value="must_acknowledge">Must Acknowledge</option>
+                            <option value="recommended">Recommended</option>
+                            <option value="optional">Optional</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Mandatory Status *</label>
+                        <select id="formReqMandatory" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500">
+                            <option value="true">Mandatory</option>
+                            <option value="false">Optional</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Priority *</label>
+                        <select id="formReqPriority" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500">
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Due Stage *</label>
+                        <select id="formReqDueStage" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500">
+                            <option value="day_1">Day 1</option>
+                            <option value="week_1">Week 1</option>
+                            <option value="week_2">Week 2</option>
+                            <option value="first_30_days">First 30 Days</option>
+                            <option value="first_60_days">First 60 Days</option>
+                            <option value="first_90_days">First 90 Days</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Source Traceability Section -->
+                <div class="bg-slate-950/80 p-4 rounded-xl border border-indigo-500/30 space-y-3">
+                    <h4 class="text-xs font-bold text-indigo-400 uppercase tracking-wider flex items-center space-x-1">
+                        <i class="fa-solid fa-link"></i> <span>Source Traceability Assignment</span>
+                    </h4>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Source Document ID *</label>
+                            <input type="text" id="formSourceDoc" required placeholder="e.g. SOP-07" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Document Version *</label>
+                            <input type="number" id="formSourceVer" min="1" value="1" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Section ID *</label>
+                            <input type="text" id="formSourceSection" required placeholder="e.g. Sec-1 or 4.2" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:border-indigo-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-400 mb-1">Page / Location (Optional)</label>
+                        <input type="text" id="formSourceLocation" placeholder="e.g. Page 3, Para 2-4" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Required Practical Task</label>
+                        <input type="text" id="formReqTask" placeholder="e.g. Complete simulated ticket escalation" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Required Assessment Topic</label>
+                        <input type="text" id="formReqTopic" placeholder="e.g. Escalation SLA timelines" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <div class="pt-4 flex items-center justify-end space-x-3 border-t border-slate-800">
+                    <button type="button" onclick="closeReqModal()" class="px-4 py-2 rounded-lg text-sm text-slate-400 hover:text-white">Cancel</button>
+                    <button type="submit" id="reqSubmitBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2 rounded-lg text-sm font-semibold flex items-center space-x-2">
+                        <i class="fa-solid fa-save"></i>
+                        <span>Save Requirement</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Role Modal -->
+    <div id="roleModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-card bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
+            <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+                <h3 class="text-base font-bold text-white flex items-center space-x-2">
+                    <i class="fa-solid fa-user-plus text-indigo-400"></i>
+                    <span>Create Job Role</span>
+                </h3>
+                <button onclick="closeRoleModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="roleForm" onsubmit="handleRoleSubmit(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Role Code *</label>
+                    <input type="text" id="roleFormCode" required placeholder="e.g. R011" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Role Title *</label>
+                    <input type="text" id="roleFormTitle" required placeholder="e.g. Software Support Engineer" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Department *</label>
+                    <input type="text" id="roleFormDept" required placeholder="e.g. IT & Engineering" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Description</label>
+                    <textarea id="roleFormDesc" rows="2" placeholder="Responsibilities and scope..." class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500"></textarea>
+                </div>
+                <div class="pt-3 flex items-center justify-end space-x-3 border-t border-slate-800">
+                    <button type="button" onclick="closeRoleModal()" class="px-4 py-2 rounded-lg text-xs text-slate-400 hover:text-white">Cancel</button>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-xs font-semibold">Create Role</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Script Section -->
+    <script>
+        const API_ROLES = '/api/roles';
+        const API_MATRIX = '/api/matrix';
+
+        let rolesCache = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initRRM();
+        });
+
+        async function initRRM() {
+            await loadRoles();
+            await loadSummaryStats();
+            await loadRequirements();
+        }
+
+        async function loadRoles() {
+            try {
+                const res = await fetch(API_ROLES);
+                rolesCache = await res.json();
+                
+                const roleFilter = document.getElementById('roleFilter');
+                const formReqRole = document.getElementById('formReqRole');
+                
+                roleFilter.innerHTML = '<option value="">All Roles</option>' + rolesCache.map(r => `<option value="${r.role_id}">${r.role_code} - ${r.title}</option>`).join('');
+                formReqRole.innerHTML = rolesCache.map(r => `<option value="${r.role_id}">${r.role_code} - ${r.title}</option>`).join('');
+            } catch (err) {
+                console.error("Error loading roles:", err);
+            }
+        }
+
+        async function loadSummaryStats() {
+            try {
+                const res = await fetch(`${API_MATRIX}/summary`);
+                const stats = await res.json();
+                document.getElementById('statTotalRoles').innerText = stats.total_roles;
+                document.getElementById('statTotalReqs').innerText = stats.total_requirements;
+                document.getElementById('statMandatoryReqs').innerText = stats.mandatory_requirements;
+                document.getElementById('statHighPrioReqs').innerText = stats.requirements_by_priority.high || 0;
+            } catch (err) {
+                console.error("Error loading summary stats:", err);
+            }
+        }
+
+        async function loadRequirements() {
+            try {
+                const search = document.getElementById('searchInput').value;
+                const roleId = document.getElementById('roleFilter').value;
+                const mandatory = document.getElementById('mandatoryFilter').value;
+                const classification = document.getElementById('classificationFilter').value;
+                const priority = document.getElementById('priorityFilter').value;
+
+                let url = `${API_MATRIX}/requirements?`;
+                if (roleId) url += `role_id=${encodeURIComponent(roleId)}&`;
+                if (mandatory) url += `is_mandatory=${encodeURIComponent(mandatory)}&`;
+                if (classification) url += `classification=${encodeURIComponent(classification)}&`;
+                if (priority) url += `priority=${encodeURIComponent(priority)}&`;
+
+                const res = await fetch(url);
+                let reqs = await res.json();
+
+                if (search) {
+                    const s = search.toLowerCase();
+                    reqs = reqs.filter(r => 
+                        r.requirement_id.toLowerCase().includes(s) ||
+                        (r.title && r.title.toLowerCase().includes(s)) ||
+                        r.required_competency.toLowerCase().includes(s) ||
+                        r.policy_requirement.toLowerCase().includes(s)
+                    );
+                }
+
+                renderRequirementsTable(reqs);
+            } catch (err) {
+                console.error("Error loading requirements:", err);
+            }
+        }
+
+        function renderRequirementsTable(reqs) {
+            const tbody = document.getElementById('requirementsTableBody');
+            if (!reqs || reqs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-slate-500">No requirements found matching filters.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = reqs.map(r => {
+                const mandatoryBadge = r.is_mandatory 
+                    ? `<span class="px-2 py-0.5 rounded text-[11px] badge-mandatory font-semibold">Mandatory</span>`
+                    : `<span class="px-2 py-0.5 rounded text-[11px] badge-optional font-semibold">Optional</span>`;
+
+                const prioBadge = r.priority === 'high'
+                    ? `<span class="px-2 py-0.5 rounded text-[11px] badge-prio-high font-semibold">High</span>`
+                    : (r.priority === 'medium' 
+                        ? `<span class="px-2 py-0.5 rounded text-[11px] badge-prio-medium font-semibold">Medium</span>`
+                        : `<span class="px-2 py-0.5 rounded text-[11px] badge-prio-low font-semibold">Low</span>`);
+
+                return `
+                    <tr class="hover:bg-slate-800/40 transition">
+                        <td class="px-6 py-4">
+                            <div class="font-bold text-white font-mono text-xs">${r.requirement_id}</div>
+                            <div class="text-xs text-slate-300 font-medium">${r.title || r.policy_requirement.substring(0, 45)}</div>
+                        </td>
+                        <td class="px-6 py-4 text-xs font-semibold text-indigo-400">${r.role_code}</td>
+                        <td class="px-6 py-4 text-xs text-slate-300">${r.required_competency}</td>
+                        <td class="px-6 py-4 text-xs font-mono text-slate-400 uppercase">${r.requirement_type}</td>
+                        <td class="px-6 py-4">${mandatoryBadge}</td>
+                        <td class="px-6 py-4">${prioBadge}</td>
+                        <td class="px-6 py-4 text-xs">
+                            <span class="bg-indigo-950 text-indigo-300 px-2 py-0.5 rounded border border-indigo-800 font-mono">
+                                <i class="fa-solid fa-file-text mr-1"></i>${r.source_document_id} v${r.source_document_version} (${r.source_section_id})
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <button onclick="deactivateReq('${r.requirement_id}')" class="text-rose-400 hover:text-rose-300 text-xs px-2 py-1">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function openCreateReqModal() {
+            document.getElementById('reqForm').reset();
+            document.getElementById('reqModal').classList.remove('hidden');
+        }
+
+        function closeReqModal() {
+            document.getElementById('reqModal').classList.add('hidden');
+        }
+
+        function openCreateRoleModal() {
+            document.getElementById('roleForm').reset();
+            document.getElementById('roleModal').classList.remove('hidden');
+        }
+
+        function closeRoleModal() {
+            document.getElementById('roleModal').classList.add('hidden');
+        }
+
+        async function handleRoleSubmit(e) {
+            e.preventDefault();
+            try {
+                const payload = {
+                    role_code: document.getElementById('roleFormCode').value,
+                    title: document.getElementById('roleFormTitle').value,
+                    department: document.getElementById('roleFormDept').value,
+                    description: document.getElementById('roleFormDesc').value
+                };
+                const res = await fetch(API_ROLES, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!res.ok) {
+                    const err = await res.json();
+                    alert(`Role Creation Error: ${err.detail}`);
+                } else {
+                    closeRoleModal();
+                    await initRRM();
+                }
+            } catch (err) {
+                alert(`Exception: ${err.message}`);
+            }
+        }
+
+        async function handleReqSubmit(e) {
+            e.preventDefault();
+            const btn = document.getElementById('reqSubmitBtn');
+            btn.disabled = true;
+
+            try {
+                const payload = {
+                    requirement_id: document.getElementById('formReqId').value,
+                    role_identifier: document.getElementById('formReqRole').value,
+                    title: document.getElementById('formReqTitle').value,
+                    policy_requirement: document.getElementById('formReqPolicy').value,
+                    required_competency: document.getElementById('formReqCompetency').value,
+                    requirement_type: document.getElementById('formReqClass').value,
+                    is_mandatory: document.getElementById('formReqMandatory').value === 'true',
+                    priority: document.getElementById('formReqPriority').value,
+                    due_stage: document.getElementById('formReqDueStage').value,
+                    source_document_id: document.getElementById('formSourceDoc').value,
+                    source_document_version: parseInt(document.getElementById('formSourceVer').value || '1'),
+                    source_section_id: document.getElementById('formSourceSection').value,
+                    source_location: document.getElementById('formSourceLocation').value || '',
+                    required_task_description: document.getElementById('formReqTask').value || '',
+                    required_assessment_topic: document.getElementById('formReqTopic').value || ''
+                };
+
+                const res = await fetch(`${API_MATRIX}/requirements`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    alert(`Validation / Creation Error: ${err.detail}`);
+                } else {
+                    closeReqModal();
+                    await loadSummaryStats();
+                    await loadRequirements();
+                }
+            } catch (err) {
+                alert(`Exception: ${err.message}`);
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function deactivateReq(reqId) {
+            if (!confirm(`Are you sure you want to deactivate requirement '${reqId}'?`)) return;
+            try {
+                const res = await fetch(`${API_MATRIX}/requirements/${reqId}`, { method: 'DELETE' });
+                if (res.ok) {
+                    await loadSummaryStats();
+                    await loadRequirements();
+                }
+            } catch (err) {
+                alert(`Error: ${err.message}`);
+            }
+        }
+    </script>
+</body>
+</html>

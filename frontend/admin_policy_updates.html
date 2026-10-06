@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OnBoardIQ — Policy Updates & Selective Regeneration Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-bg: #0f172a;
+            --card-bg: #1e293b;
+            --accent-blue: #38bdf8;
+            --accent-purple: #818cf8;
+            --accent-green: #34d399;
+            --accent-orange: #fb923c;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+        }
+
+        body {
+            background-color: var(--primary-bg);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background-color: #020617;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .badge-status {
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 20px;
+        }
+
+        .status-detected { background-color: #7c2d12; color: #ffedd5; }
+        .status-impact_analyzed { background-color: #1e3a8a; color: #bfdbfe; }
+        .status-outdated_marked { background-color: #854d0e; color: #fef08a; }
+        .status-completed { background-color: #064e3b; color: #a7f3d0; }
+        .status-review_required { background-color: #581c87; color: #e9d5ff; }
+
+        .btn-action {
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-weight: 600;
+        }
+
+        .json-box {
+            background-color: #090d16;
+            color: #38bdf8;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body class="py-3">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark mb-4 px-4">
+        <a class="navbar-brand fw-bold" href="#">
+            <i class="fa-solid fa-arrows-split-up-and-left text-warning me-2"></i> OnBoardIQ — Policy Impact & Selective Regeneration
+        </a>
+        <div class="ms-auto d-flex gap-3">
+            <a href="/admin/documents" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-file me-1"></i> Documents</a>
+            <a href="/admin/rrm" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-table-list me-1"></i> RRM Matrix</a>
+            <a href="/admin/pipeline1" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-wand-magic-sparkles me-1"></i> Pipeline 1</a>
+            <a href="/admin/pipeline2" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-shield-check me-1"></i> Pipeline 2</a>
+            <a href="/admin/human-review" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-user-check me-1"></i> Human Review</a>
+            <a href="/employee/dashboard" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-graduation-cap me-1"></i> Employee Portal</a>
+            <a href="/admin/policy-updates" class="btn btn-primary btn-sm active"><i class="fa-solid fa-bolt me-1"></i> Policy Updates</a>
+        </div>
+    </nav>
+
+    <div class="container-fluid px-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h2 class="fw-bold"><i class="fa-solid fa-file-circle-exclamation text-warning me-2"></i> Policy Update Impact & Selective Regeneration</h2>
+                <p class="text-muted">Detect document version changes, run 100% deterministic requirement impact analysis, and selectively regenerate affected modules via Pipeline 1 & Pipeline 2.</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <button onclick="loadPolicyUpdates()" class="btn btn-outline-info"><i class="fa-solid fa-rotate me-1"></i> Refresh Dashboard</button>
+            </div>
+        </div>
+
+        <!-- Trigger Analysis Card -->
+        <div class="card p-4 mb-4 border-warning bg-warning bg-opacity-10">
+            <h5 class="fw-bold text-warning mb-3"><i class="fa-solid fa-magnifying-glass-chart me-2"></i> Run Policy Impact Analysis</h5>
+            <div class="row g-3">
+                <div class="col-md-5">
+                    <label class="form-label text-muted small">Target Document ID</label>
+                    <input type="text" id="triggerDocId" class="form-control bg-dark text-light border-secondary" placeholder="e.g. POL-001 or SOP-07" value="POL-001">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label text-muted small">New Version Number</label>
+                    <input type="number" id="triggerDocVersion" class="form-control bg-dark text-light border-secondary" value="2" min="1">
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button onclick="triggerAnalysis()" class="btn btn-warning w-100 fw-bold"><i class="fa-solid fa-bolt me-1"></i> Analyze Impact & Mark Outdated</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Policy Updates Table -->
+        <div class="card p-4">
+            <h5 class="fw-bold mb-3"><i class="fa-solid fa-history me-2"></i> Detected Policy Updates</h5>
+            <div class="table-responsive">
+                <table class="table table-dark table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Update ID</th>
+                            <th>Document Title</th>
+                            <th>Versions</th>
+                            <th>Change Type</th>
+                            <th>Roles</th>
+                            <th>Plans</th>
+                            <th>Modules</th>
+                            <th>Employees</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="updatesTableBody">
+                        <tr>
+                            <td colspan="10" class="text-center text-muted py-4"><i class="fa-solid fa-spinner fa-spin me-2"></i> Loading policy updates...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Impact Details Modal -->
+    <div class="modal fade" id="impactModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content bg-dark text-light border-secondary">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title" id="impactModalTitle"><i class="fa-solid fa-layer-group text-info me-2"></i> Policy Update Impact Analysis</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="impactSummaryBox" class="card p-3 mb-3 bg-secondary bg-opacity-10 border-info"></div>
+
+                    <!-- Affected Requirements Table -->
+                    <h6 class="fw-bold text-warning mb-2"><i class="fa-solid fa-table-list me-1"></i> Affected RRM Requirements</h6>
+                    <div class="table-responsive mb-3">
+                        <table class="table table-dark table-sm align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Requirement ID</th>
+                                    <th>Old Version</th>
+                                    <th>New Version</th>
+                                    <th>Change Type</th>
+                                    <th>Affected Roles</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reqsTableBody"></tbody>
+                        </table>
+                    </div>
+
+                    <!-- Affected Employees Table -->
+                    <h6 class="fw-bold text-info mb-2"><i class="fa-solid fa-users me-1"></i> Affected Employees & Plans</h6>
+                    <div class="table-responsive mb-3">
+                        <table class="table table-dark table-sm align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Role</th>
+                                    <th>Plan ID</th>
+                                    <th>Affected Module</th>
+                                    <th>Reason</th>
+                                </tr>
+                            </thead>
+                            <tbody id="empsTableBody"></tbody>
+                        </table>
+                    </div>
+
+                    <!-- Audit Trail -->
+                    <h6 class="fw-bold text-success mb-2"><i class="fa-solid fa-clock-rotate-left me-1"></i> Policy Audit Trail Events</h6>
+                    <div id="auditEventsBox" class="json-box"></div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success fw-bold" id="regenerateBtn" onclick="executeSelectiveRegeneration()"><i class="fa-solid fa-rotate me-1"></i> Regenerate Affected Content Only</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentUpdates = [];
+        let activeUpdateId = null;
+
+        document.addEventListener('DOMContentLoaded', loadPolicyUpdates);
+
+        async function loadPolicyUpdates() {
+            const tableBody = document.getElementById('updatesTableBody');
+            try {
+                const res = await fetch('/api/policy-updates');
+                const data = await res.json();
+                currentUpdates = data;
+
+                if (data.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="10" class="text-center text-muted py-4">No policy updates detected yet. Upload a new document version to analyze impact.</td></tr>';
+                    return;
+                }
+
+                tableBody.innerHTML = data.map(u => `
+                    <tr>
+                        <td class="font-monospace small text-info">${u.update_id.substring(0, 8)}...</td>
+                        <td><div class="fw-bold">${u.document_title}</div><div class="text-muted small">${u.document_id}</div></td>
+                        <td class="fw-bold">v${u.old_version} → v${u.new_version}</td>
+                        <td><span class="badge bg-secondary">${u.change_type.toUpperCase()}</span></td>
+                        <td class="fw-bold text-warning">${u.affected_roles_count}</td>
+                        <td class="fw-bold text-info">${u.affected_plans_count}</td>
+                        <td class="fw-bold text-primary">${u.affected_modules_count}</td>
+                        <td class="fw-bold text-success">${u.affected_employees_count}</td>
+                        <td><span class="badge badge-status status-${u.status}">${u.status.toUpperCase()}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-info" onclick="viewImpactDetails('${u.update_id}')"><i class="fa-solid fa-eye me-1"></i> Impact Breakdown</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                tableBody.innerHTML = `<tr><td colspan="10" class="text-center text-danger py-4">Error: ${err.message}</td></tr>`;
+            }
+        }
+
+        async function triggerAnalysis() {
+            const docId = document.getElementById('triggerDocId').value;
+            const ver = document.getElementById('triggerDocVersion').value;
+
+            const res = await fetch(`/api/policy-updates/policies/${docId}/versions/${ver}/impact-analysis`, {
+                method: 'POST',
+                headers: { 'X-User-Role': 'admin' }
+            });
+
+            if (res.ok) {
+                alert(`Policy impact analysis completed for '${docId}' v${ver}.`);
+                loadPolicyUpdates();
+            } else {
+                const err = await res.json();
+                alert(`Error: ${err.detail || JSON.stringify(err)}`);
+            }
+        }
+
+        async function viewImpactDetails(updateId) {
+            activeUpdateId = updateId;
+
+            const updateRes = await fetch(`/api/policy-updates/${updateId}`);
+            const updateData = await updateRes.json();
+
+            const reqsRes = await fetch(`/api/policy-updates/${updateId}/requirements`);
+            const reqsData = await reqsRes.json();
+
+            const empsRes = await fetch(`/api/policy-updates/${updateId}/employees`);
+            const empsData = await empsRes.json();
+
+            const histRes = await fetch(`/api/policy-updates/${updateId}/history`);
+            const histData = await histRes.json();
+
+            document.getElementById('impactSummaryBox').innerHTML = `
+                <div class="row">
+                    <div class="col-md-4"><strong>Document:</strong> ${updateData.document_title} (${updateData.document_id})</div>
+                    <div class="col-md-3"><strong>Version Change:</strong> v${updateData.old_version} → v${updateData.new_version}</div>
+                    <div class="col-md-3"><strong>Affected Modules:</strong> ${updateData.affected_modules_count}</div>
+                    <div class="col-md-2"><strong>Status:</strong> ${updateData.status.toUpperCase()}</div>
+                </div>
+            `;
+
+            document.getElementById('reqsTableBody').innerHTML = reqsData.map(r => `
+                <tr>
+                    <td class="font-monospace text-info">${r.requirement_id}</td>
+                    <td>v${r.old_source_version}</td>
+                    <td>v${r.new_source_version}</td>
+                    <td><span class="badge bg-warning text-dark">${r.change_type}</span></td>
+                    <td>${r.affected_roles.join(', ')}</td>
+                </tr>
+            `).join('');
+
+            document.getElementById('empsTableBody').innerHTML = empsData.map(e => `
+                <tr>
+                    <td class="fw-bold">${e.employee_name}</td>
+                    <td>${e.role_title}</td>
+                    <td class="font-monospace text-muted small">${e.plan_id.substring(0, 8)}...</td>
+                    <td class="text-warning">${e.affected_module_title}</td>
+                    <td class="small text-muted">${e.reason}</td>
+                </tr>
+            `).join('');
+
+            document.getElementById('auditEventsBox').innerText = JSON.stringify(histData, null, 2);
+
+            new bootstrap.Modal(document.getElementById('impactModal')).show();
+        }
+
+        async function executeSelectiveRegeneration() {
+            if (!activeUpdateId) return;
+
+            const res = await fetch(`/api/policy-updates/${activeUpdateId}/regenerate`, {
+                method: 'POST',
+                headers: { 'X-User-Role': 'admin' }
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                alert(`Selective regeneration finished!\nTotal affected modules: ${data.total_affected_modules}\nRegenerated: ${data.regenerated_count}\nValidated: ${data.validated_count}\nReview Required: ${data.review_required_count}`);
+                bootstrap.Modal.getInstance(document.getElementById('impactModal')).hide();
+                loadPolicyUpdates();
+            } else {
+                const err = await res.json();
+                alert(`Error: ${err.detail || JSON.stringify(err)}`);
+            }
+        }
+    </script>
+</body>
+</html>

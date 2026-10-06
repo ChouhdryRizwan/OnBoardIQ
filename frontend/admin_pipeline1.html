@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OnBoardIQ — Pipeline 1 Onboarding Plan Generator</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .stage-badge {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 9999px;
+            font-weight: 600;
+        }
+        pre.json-view {
+            background-color: #1e1e2e;
+            color: #a6e3a1;
+            font-family: monospace;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800">
+
+    <!-- Header Navigation -->
+    <header class="bg-indigo-900 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-indigo-600 p-2 rounded-lg text-xl font-bold">⚡</div>
+                <div>
+                    <h1 class="text-xl font-extrabold tracking-tight">OnBoardIQ</h1>
+                    <p class="text-xs text-indigo-300">Pipeline 1 — GenAI Structured Onboarding Generator</p>
+                </div>
+            </div>
+            <nav class="flex space-x-2 text-sm font-medium">
+                <a href="/admin/documents" class="px-3 py-2 rounded-md hover:bg-indigo-800 transition">Company Documents</a>
+                <a href="/admin/rrm" class="px-3 py-2 rounded-md hover:bg-indigo-800 transition">Role Requirement Matrix</a>
+                <a href="/admin/pipeline1" class="px-3 py-2 rounded-md bg-indigo-700 text-white font-semibold">Pipeline 1 (GenAI Plan)</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 py-8">
+
+        <!-- Banner Alert -->
+        <div class="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-r-lg mb-8 shadow-sm flex items-start justify-between">
+            <div class="flex items-start space-x-3">
+                <i class="fa-solid fa-brain text-blue-600 text-xl mt-1"></i>
+                <div>
+                    <h3 class="font-bold text-blue-900">Pipeline 1 — Generative AI Content Generation Engine</h3>
+                    <p class="text-sm text-blue-700 mt-1">
+                        Select an employee and role to load grounded RRM requirements and company policy documents. Pipeline 1 generates structured multi-stage plans with 100% source document traceability.
+                    </p>
+                </div>
+            </div>
+            <span class="bg-blue-200 text-blue-800 text-xs font-semibold px-2.5 py-1 rounded">Status: GENERATED (Unverified)</span>
+        </div>
+
+        <!-- Workflow Step Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            
+            <!-- Step 1: Employee & Role Selection -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <div class="flex items-center space-x-2 text-indigo-700 font-bold mb-4">
+                    <span class="bg-indigo-100 text-indigo-800 rounded-full w-7 h-7 flex items-center justify-center text-sm">1</span>
+                    <h3>Select Employee & Role</h3>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Select Employee</label>
+                        <select id="selectEmployee" onchange="onEmployeeSelect()" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-indigo-500">
+                            <option value="">-- Choose Employee --</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Target Job Role</label>
+                        <select id="selectRole" onchange="onRoleSelect()" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-indigo-500">
+                            <option value="">-- Choose Role --</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">GenAI Model Provider</label>
+                        <select id="selectModel" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-indigo-500">
+                            <option value="gemini-2.5-flash">Google Gemini 2.5 Flash (Recommended)</option>
+                            <option value="gemini-1.5-pro">Google Gemini 1.5 Pro</option>
+                            <option value="fallback-ground-truth-generator">Deterministic Ground-Truth Generator</option>
+                        </select>
+                    </div>
+
+                    <button onclick="generatePlan()" id="btnGenerate" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg shadow transition flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>Generate Onboarding Plan</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 2: RRM Context & Sources Preview -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 lg:col-span-2">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-2 text-indigo-700 font-bold">
+                        <span class="bg-indigo-100 text-indigo-800 rounded-full w-7 h-7 flex items-center justify-center text-sm">2</span>
+                        <h3>RRM Ground-Truth Requirements & Document Sources</h3>
+                    </div>
+                    <span id="reqCountBadge" class="bg-slate-100 text-slate-700 text-xs font-semibold px-2.5 py-1 rounded">0 Requirements Found</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-64 overflow-y-auto" id="rrmPreviewContainer">
+                    <div class="p-4 bg-slate-50 border rounded-lg text-slate-500 text-sm text-center col-span-2">
+                        Select an employee or job role above to inspect applicable RRM ground-truth requirements and source documents.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Generation Progress Overlay -->
+        <div id="progressOverlay" class="hidden bg-white p-6 rounded-xl shadow-md border border-indigo-200 mb-8 text-center">
+            <div class="inline-block animate-spin text-indigo-600 text-3xl mb-3">
+                <i class="fa-solid fa-circle-notch"></i>
+            </div>
+            <h4 class="font-bold text-slate-800">Generating Structured Onboarding Plan...</h4>
+            <p class="text-xs text-slate-500 mt-1">Ingesting RRM requirements, embedding traceable document citations, and validating Pydantic JSON schema...</p>
+        </div>
+
+        <!-- Output Section with Viewer Tabs -->
+        <div id="outputSection" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <!-- Tabs Header -->
+            <div class="bg-slate-100 border-b border-slate-200 px-6 py-3 flex items-center justify-between">
+                <div class="flex space-x-4">
+                    <button onclick="switchTab('plan')" id="tabPlan" class="px-4 py-2 font-semibold text-sm rounded-lg bg-indigo-600 text-white shadow-sm">
+                        <i class="fa-solid fa-list-check mr-2"></i>View Structured Plan
+                    </button>
+                    <button onclick="switchTab('json')" id="tabJson" class="px-4 py-2 font-semibold text-sm rounded-lg bg-white text-slate-700 hover:bg-slate-200">
+                        <i class="fa-solid fa-code mr-2"></i>View Raw JSON
+                    </button>
+                    <button onclick="switchTab('sources')" id="tabSources" class="px-4 py-2 font-semibold text-sm rounded-lg bg-white text-slate-700 hover:bg-slate-200">
+                        <i class="fa-solid fa-file-invoice mr-2"></i>View Source Citations
+                    </button>
+                    <button onclick="switchTab('metadata')" id="tabMetadata" class="px-4 py-2 font-semibold text-sm rounded-lg bg-white text-slate-700 hover:bg-slate-200">
+                        <i class="fa-solid fa-circle-info mr-2"></i>Generation Metadata
+                    </button>
+                </div>
+
+                <div class="text-xs font-medium text-slate-500">
+                    Plan ID: <span id="lblPlanId" class="font-mono text-indigo-700 font-bold"></span>
+                </div>
+            </div>
+
+            <!-- Tab 1: Structured Plan View -->
+            <div id="viewPlan" class="p-6">
+                <div id="stagesContainer" class="space-y-6"></div>
+            </div>
+
+            <!-- Tab 2: Raw JSON Viewer -->
+            <div id="viewJson" class="p-6 hidden">
+                <div class="flex justify-between items-center mb-3">
+                    <h4 class="font-bold text-slate-700 text-sm">Validated Structured Pydantic JSON Output</h4>
+                    <button onclick="copyJson()" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1.5 rounded font-medium">
+                        <i class="fa-regular fa-copy mr-1"></i>Copy JSON
+                    </button>
+                </div>
+                <pre id="rawJsonView" class="json-view text-xs"></pre>
+            </div>
+
+            <!-- Tab 3: Source Citations View -->
+            <div id="viewSources" class="p-6 hidden">
+                <h4 class="font-bold text-slate-700 text-sm mb-4">Traceable Source Citations Mapping</h4>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-600 border-b">
+                                <th class="p-3 font-semibold">Module</th>
+                                <th class="p-3 font-semibold">Requirement ID</th>
+                                <th class="p-3 font-semibold">Source Document ID</th>
+                                <th class="p-3 font-semibold">Section ID</th>
+                                <th class="p-3 font-semibold">Mandatory</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sourcesTableBody" class="divide-y"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab 4: Generation Metadata View -->
+            <div id="viewMetadata" class="p-6 hidden">
+                <h4 class="font-bold text-slate-700 text-sm mb-4">Pipeline 1 Execution Run Audit Record</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="metadataCards"></div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        let currentPlanData = null;
+        let currentRawJson = null;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            loadEmployees();
+            loadRoles();
+        });
+
+        async function loadEmployees() {
+            try {
+                const res = await fetch("/api/employees");
+                const data = await res.json();
+                const sel = document.getElementById("selectEmployee");
+                sel.innerHTML = '<option value="">-- Choose Employee --</option>';
+                data.forEach(emp => {
+                    sel.innerHTML += `<option value="${emp.employee_id}">${emp.name} (${emp.role_code} - ${emp.department})</option>`;
+                });
+            } catch (err) {
+                console.error("Failed loading employees:", err);
+            }
+        }
+
+        async function loadRoles() {
+            try {
+                const res = await fetch("/api/roles");
+                const data = await res.json();
+                const sel = document.getElementById("selectRole");
+                sel.innerHTML = '<option value="">-- Choose Role --</option>';
+                data.forEach(r => {
+                    sel.innerHTML += `<option value="${r.role_code}">${r.title} (${r.role_code})</option>`;
+                });
+            } catch (err) {
+                console.error("Failed loading roles:", err);
+            }
+        }
+
+        async function onEmployeeSelect() {
+            const empId = document.getElementById("selectEmployee").value;
+            if (!empId) return;
+            try {
+                const res = await fetch(`/api/employees/${empId}`);
+                const emp = await res.json();
+                if (emp && emp.role_code) {
+                    document.getElementById("selectRole").value = emp.role_code;
+                    fetchRRMPreview(emp.role_code);
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function onRoleSelect() {
+            const roleCode = document.getElementById("selectRole").value;
+            if (roleCode) fetchRRMPreview(roleCode);
+        }
+
+        async function fetchRRMPreview(roleCode) {
+            try {
+                const res = await fetch(`/api/matrix/requirements/${roleCode}`);
+                const data = await res.json();
+                const container = document.getElementById("rrmPreviewContainer");
+                const countBadge = document.getElementById("reqCountBadge");
+
+                if (!Array.isArray(data) || data.length === 0) {
+                    container.innerHTML = '<div class="p-4 bg-amber-50 text-amber-800 text-sm rounded-lg col-span-2">No active RRM requirements found for this role.</div>';
+                    countBadge.innerText = '0 Requirements Found';
+                    return;
+                }
+
+                countBadge.innerText = `${data.length} Requirements Found`;
+                container.innerHTML = data.map(r => `
+                    <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+                        <div class="flex justify-between items-start mb-1">
+                            <span class="font-mono font-bold text-indigo-700">${r.requirement_id}</span>
+                            <span class="px-2 py-0.5 rounded text-white text-[10px] font-bold ${r.is_mandatory ? 'bg-red-500' : 'bg-slate-400'}">${r.is_mandatory ? 'MANDATORY' : 'OPTIONAL'}</span>
+                        </div>
+                        <p class="font-medium text-slate-800">${r.title || r.policy_requirement}</p>
+                        <div class="mt-2 text-slate-500 flex justify-between">
+                            <span>Doc: <strong class="text-slate-700">${r.source_document_id}</strong> (v${r.source_document_version || 1})</span>
+                            <span>Sec: <strong class="text-slate-700">${r.source_section_id}</strong></span>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error("Failed fetching RRM requirements:", err);
+            }
+        }
+
+        async function generatePlan() {
+            const empId = document.getElementById("selectEmployee").value;
+            const roleId = document.getElementById("selectRole").value;
+            const modelName = document.getElementById("selectModel").value;
+
+            if (!empId) {
+                alert("Please select an employee first.");
+                return;
+            }
+
+            document.getElementById("progressOverlay").classList.remove("hidden");
+            document.getElementById("outputSection").classList.add("hidden");
+
+            try {
+                const res = await fetch("/api/pipeline1/generate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        employee_id: empId,
+                        role_id: roleId,
+                        model_name: modelName,
+                        prompt_version: "v1.0.0"
+                    })
+                });
+
+                const data = await res.json();
+                document.getElementById("progressOverlay").classList.add("hidden");
+
+                if (!res.ok) {
+                    alert("Pipeline 1 Generation Failed: " + (data.detail || JSON.stringify(data)));
+                    return;
+                }
+
+                currentPlanData = data;
+                currentRawJson = data.structured_json_output;
+                renderPlanResults(data);
+                document.getElementById("outputSection").classList.remove("hidden");
+            } catch (err) {
+                document.getElementById("progressOverlay").classList.add("hidden");
+                alert("Error calling Pipeline 1 generation API: " + err.message);
+            }
+        }
+
+        function renderPlanResults(data) {
+            document.getElementById("lblPlanId").innerText = data.plan_id;
+            
+            // Render Raw JSON
+            document.getElementById("rawJsonView").innerText = JSON.stringify(data.structured_json_output, null, 2);
+
+            // Render Structured Plan Stages
+            const stagesContainer = document.getElementById("stagesContainer");
+            const stages = data.structured_json_output.stages || [];
+
+            stagesContainer.innerHTML = stages.map(stg => `
+                <div class="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-indigo-50 border-b border-indigo-100 px-5 py-3 flex justify-between items-center">
+                        <h3 class="font-bold text-indigo-900 text-base flex items-center space-x-2">
+                            <i class="fa-solid fa-flag text-indigo-600"></i>
+                            <span>Stage: ${stg.stage || stg.stage_name}</span>
+                        </h3>
+                        <span class="bg-indigo-200 text-indigo-800 text-xs font-bold px-3 py-1 rounded-full">${(stg.modules || []).length} Learning Modules</span>
+                    </div>
+                    <div class="p-5 space-y-4">
+                        ${(stg.modules || []).map(m => `
+                            <div class="bg-slate-50 border border-slate-200 p-4 rounded-lg">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <span class="font-mono text-xs text-indigo-600 font-bold mr-2">[${m.module_id || m.module_code}]</span>
+                                        <h4 class="font-bold text-slate-800 inline text-sm">${m.title || m.module_title}</h4>
+                                    </div>
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold text-white ${m.mandatory ? 'bg-red-500' : 'bg-slate-400'}">
+                                        ${m.mandatory ? 'MANDATORY' : 'OPTIONAL'}
+                                    </span>
+                                </div>
+                                <p class="text-xs text-slate-600 mt-1">${m.description || m.purpose || ''}</p>
+                                
+                                <div class="mt-3 flex flex-wrap gap-2 text-[11px] text-slate-500">
+                                    <span class="bg-white border px-2 py-1 rounded"><strong>Source Doc:</strong> ${m.source_document_id || 'N/A'}</span>
+                                    <span class="bg-white border px-2 py-1 rounded"><strong>Section:</strong> ${m.source_section_id || 'N/A'}</span>
+                                    <span class="bg-white border px-2 py-1 rounded"><strong>Requirement:</strong> ${m.requirement_id || 'N/A'}</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+
+            // Render Sources Table
+            const sourcesTable = document.getElementById("sourcesTableBody");
+            let sourceRows = [];
+            stages.forEach(stg => {
+                (stg.modules || []).forEach(m => {
+                    sourceRows.push(`
+                        <tr>
+                            <td class="p-3 font-semibold text-slate-800">${m.title || m.module_title}</td>
+                            <td class="p-3 font-mono text-indigo-700">${m.requirement_id || 'N/A'}</td>
+                            <td class="p-3 font-mono font-bold">${m.source_document_id || 'N/A'}</td>
+                            <td class="p-3 font-mono">${m.source_section_id || 'N/A'}</td>
+                            <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold text-white ${m.mandatory ? 'bg-red-500' : 'bg-slate-400'}">${m.mandatory ? 'YES' : 'NO'}</span></td>
+                        </tr>
+                    `);
+                });
+            });
+            sourcesTable.innerHTML = sourceRows.join('');
+
+            // Render Metadata
+            const metaContainer = document.getElementById("metadataCards");
+            metaContainer.innerHTML = `
+                <div class="p-4 bg-slate-50 border rounded-lg">
+                    <span class="text-xs text-slate-500 uppercase font-semibold">GenAI Model Provider</span>
+                    <p class="font-bold text-slate-800 text-sm mt-1">${data.genai_model}</p>
+                </div>
+                <div class="p-4 bg-slate-50 border rounded-lg">
+                    <span class="text-xs text-slate-500 uppercase font-semibold">Prompt Version</span>
+                    <p class="font-bold text-indigo-700 text-sm mt-1">${data.prompt_version}</p>
+                </div>
+                <div class="p-4 bg-slate-50 border rounded-lg">
+                    <span class="text-xs text-slate-500 uppercase font-semibold">Pipeline 1 Status</span>
+                    <p class="font-bold text-amber-700 text-sm mt-1">${data.verification_status}</p>
+                </div>
+            `;
+        }
+
+        function switchTab(tabName) {
+            ["plan", "json", "sources", "metadata"].forEach(t => {
+                const view = document.getElementById("view" + t.charAt(0).toUpperCase() + t.slice(1));
+                const btn = document.getElementById("tab" + t.charAt(0).toUpperCase() + t.slice(1));
+                if (t === tabName) {
+                    view.classList.remove("hidden");
+                    btn.className = "px-4 py-2 font-semibold text-sm rounded-lg bg-indigo-600 text-white shadow-sm";
+                } else {
+                    view.classList.add("hidden");
+                    btn.className = "px-4 py-2 font-semibold text-sm rounded-lg bg-white text-slate-700 hover:bg-slate-200";
+                }
+            });
+        }
+
+        function copyJson() {
+            const rawText = document.getElementById("rawJsonView").innerText;
+            navigator.clipboard.writeText(rawText);
+            alert("Raw structured JSON copied to clipboard!");
+        }
+    </script>
+</body>
+</html>

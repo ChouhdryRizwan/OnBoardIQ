@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: onboardiq-backend
+    runtime: python
+    region: oregon
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn src.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.6
+      - key: ENVIRONMENT
+        value: production
+            - key: DATABASE_URL
+        # External PostgreSQL (Neon / Supabase / any managed Postgres).
+        # Set manually in the Render Dashboard after the first deploy:
+        # e.g. postgresql://user:password@host:5432/dbname?sslmode=require
+        sync: false
+      - key: CORS_ORIGINS
+        # Comma-separated list of allowed origins.
+        # For demo deploys "*" allows any origin (frontend uses header-based auth, no cookies).
+        # For production, replace with your real frontend URL(s), e.g. https://your-app.vercel.app
+        value: "*"
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: UPLOAD_DIR
+        value: /data/uploads
+    disk:
+      name: uploads-storage
+      mountPath: /data/uploads
+      sizeGB: 1

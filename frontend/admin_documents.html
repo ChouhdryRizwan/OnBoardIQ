@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OnBoardIQ — Admin Document Management</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #0f172a; color: #f8fafc; font-family: ui-sans-serif, system-ui, sans-serif; }
+        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .badge-active { background-color: #065f46; color: #34d399; }
+        .badge-obsolete { background-color: #7f1d1d; color: #fca5a5; }
+    </style>
+</head>
+<body class="min-h-screen pb-12">
+    <!-- Navigation Header -->
+    <header class="border-b border-slate-800 bg-slate-900/80 sticky top-0 z-40 backdrop-blur">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-indigo-600 text-white p-2 rounded-lg font-bold text-xl">
+                    <i class="fa-solid fa-bolt-lightning"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-white tracking-wide">OnBoardIQ</h1>
+                    <p class="text-xs text-slate-400">OnboardVerse Enterprise Intelligence Engine</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <span class="text-xs px-3 py-1 bg-slate-800 border border-slate-700 rounded-full text-slate-300">
+                    <i class="fa-solid fa-user-shield text-emerald-400 mr-1"></i> Role: Admin / Training Manager
+                </span>
+                <button onclick="openUploadModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center space-x-2">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <span>Upload Document</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-6 pt-8">
+        <!-- Overview Stats Row -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="glass-card p-5 rounded-xl flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Documents</p>
+                    <h3 id="statTotalDocs" class="text-2xl font-bold text-white mt-1">0</h3>
+                </div>
+                <div class="w-12 h-12 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-folder-open"></i>
+                </div>
+            </div>
+            <div class="glass-card p-5 rounded-xl flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Active Versions</p>
+                    <h3 id="statActiveDocs" class="text-2xl font-bold text-emerald-400 mt-1">0</h3>
+                </div>
+                <div class="w-12 h-12 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+            </div>
+            <div class="glass-card p-5 rounded-xl flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Extracted Chunks</p>
+                    <h3 id="statTotalChunks" class="text-2xl font-bold text-cyan-400 mt-1">0</h3>
+                </div>
+                <div class="w-12 h-12 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-cubes"></i>
+                </div>
+            </div>
+            <div class="glass-card p-5 rounded-xl flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Security Flags</p>
+                    <h3 id="statFlaggedScans" class="text-2xl font-bold text-rose-400 mt-1">0</h3>
+                </div>
+                <div class="w-12 h-12 rounded-lg bg-rose-500/10 text-rose-400 flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-shield-cat"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter & Search Controls -->
+        <div class="glass-card p-4 rounded-xl mb-6 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center space-x-3 flex-1 min-w-[280px]">
+                <div class="relative w-full">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-sm"></i>
+                    <input type="text" id="searchInput" oninput="loadDocuments()" placeholder="Search by Document ID, Title, or Department..." class="w-full bg-slate-900/90 border border-slate-700 rounded-lg pl-9 pr-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <select id="categoryFilter" onchange="loadDocuments()" class="bg-slate-900 border border-slate-700 text-slate-300 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
+                    <option value="">All Categories</option>
+                    <option value="company_handbook">Company Handbook</option>
+                    <option value="hr_policy">HR Policy</option>
+                    <option value="department_sop">Department SOP</option>
+                    <option value="information_security_policy">InfoSec Policy</option>
+                    <option value="compliance_instruction">Compliance Instruction</option>
+                </select>
+                <select id="statusFilter" onchange="loadDocuments()" class="bg-slate-900 border border-slate-700 text-slate-300 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
+                    <option value="">All Statuses</option>
+                    <option value="active">Active</option>
+                    <option value="obsolete">Obsolete</option>
+                    <option value="pending_review">Pending Review</option>
+                    <option value="draft">Draft</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Documents Data Table -->
+        <div class="glass-card rounded-xl overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-300">
+                    <thead class="bg-slate-800/80 text-xs uppercase tracking-wider text-slate-400 border-b border-slate-700">
+                        <tr>
+                            <th class="px-6 py-4">Document ID / Title</th>
+                            <th class="px-6 py-4">Category</th>
+                            <th class="px-6 py-4">Department</th>
+                            <th class="px-6 py-4">Ver</th>
+                            <th class="px-6 py-4">Status</th>
+                            <th class="px-6 py-4">Processing</th>
+                            <th class="px-6 py-4">Chunks</th>
+                            <th class="px-6 py-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="documentsTableBody" class="divide-y divide-slate-800">
+                        <!-- Loaded dynamically via JS -->
+                        <tr>
+                            <td colspan="8" class="text-center py-8 text-slate-500">Loading documents...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Upload Document Modal -->
+    <div id="uploadModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-card bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl">
+            <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+                <h3 id="uploadModalTitle" class="text-lg font-bold text-white flex items-center space-x-2">
+                    <i class="fa-solid fa-file-arrow-up text-indigo-400"></i>
+                    <span>Upload Organizational Document</span>
+                </h3>
+                <button onclick="closeUploadModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="uploadForm" onsubmit="handleUploadSubmit(event)" class="p-6 space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Document ID *</label>
+                        <input type="text" id="formDocumentId" required placeholder="e.g. POL-HR-001" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Version Number *</label>
+                        <input type="number" id="formVersion" min="1" value="1" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Document Title *</label>
+                    <input type="text" id="formTitle" required placeholder="e.g. Employee Information Security Policy" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Category *</label>
+                        <select id="formCategory" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500">
+                            <option value="company_handbook">Company Handbook</option>
+                            <option value="hr_policy">HR Policy</option>
+                            <option value="information_security_policy">Information Security Policy</option>
+                            <option value="workplace_conduct_policy">Workplace Conduct Policy</option>
+                            <option value="department_sop">Department SOP</option>
+                            <option value="compliance_instruction">Compliance Instruction</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Department</label>
+                        <input type="text" id="formDepartment" placeholder="e.g. Customer Support" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Effective Date *</label>
+                        <input type="date" id="formEffectiveDate" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Expiry Date (Optional)</label>
+                        <input type="date" id="formExpiryDate" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Description</label>
+                    <textarea id="formDescription" rows="2" placeholder="Brief document overview or scope..." class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-indigo-500"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Select File (PDF, DOCX, TXT, MD, CSV) *</label>
+                    <input type="file" id="formFile" required accept=".pdf,.docx,.txt,.md,.markdown,.csv" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-400 file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500">
+                </div>
+
+                <div class="pt-4 flex items-center justify-end space-x-3 border-t border-slate-800">
+                    <button type="button" onclick="closeUploadModal()" class="px-4 py-2 rounded-lg text-sm text-slate-400 hover:text-white">Cancel</button>
+                    <button type="submit" id="uploadSubmitBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2 rounded-lg text-sm font-semibold flex items-center space-x-2">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <span>Upload & Process</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Chunks & Details Modal -->
+    <div id="detailsModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-card bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-4xl h-[85vh] flex flex-col overflow-hidden shadow-2xl">
+            <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+                <div>
+                    <h3 id="detailsModalTitle" class="text-lg font-bold text-white">Document Traceable Chunks</h3>
+                    <p id="detailsModalSubtitle" class="text-xs text-slate-400"></p>
+                </div>
+                <button onclick="closeDetailsModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div id="detailsModalContent" class="p-6 overflow-y-auto space-y-4 flex-1">
+                <!-- Loaded dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Section -->
+    <script>
+        const API_BASE = '/api/documents';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('formEffectiveDate').value = new Date().toISOString().split('T')[0];
+            loadDocuments();
+        });
+
+        async function loadDocuments() {
+            try {
+                const search = document.getElementById('searchInput').value;
+                const category = document.getElementById('categoryFilter').value;
+                const statusFilter = document.getElementById('statusFilter').value;
+
+                let url = `${API_BASE}?`;
+                if (search) url += `search=${encodeURIComponent(search)}&`;
+                if (category) url += `category=${encodeURIComponent(category)}&`;
+                if (statusFilter) url += `status_filter=${encodeURIComponent(statusFilter)}&`;
+
+                const res = await fetch(url);
+                const docs = await res.json();
+                renderTable(docs);
+                updateStats(docs);
+            } catch (err) {
+                console.error("Error loading documents:", err);
+            }
+        }
+
+        function renderTable(docs) {
+            const tbody = document.getElementById('documentsTableBody');
+            if (!docs || docs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-slate-500">No documents found matching filters.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = docs.map(d => {
+                const statusBadge = d.status === 'active' 
+                    ? `<span class="px-2 py-0.5 rounded text-xs badge-active font-semibold">Active</span>`
+                    : `<span class="px-2 py-0.5 rounded text-xs badge-obsolete font-semibold">Obsolete</span>`;
+
+                const processBadge = d.processing_status === 'completed'
+                    ? `<span class="text-xs text-emerald-400"><i class="fa-solid fa-check-circle mr-1"></i>Completed</span>`
+                    : `<span class="text-xs text-rose-400"><i class="fa-solid fa-exclamation-triangle mr-1"></i>${d.processing_status}</span>`;
+
+                return `
+                    <tr class="hover:bg-slate-800/40 transition">
+                        <td class="px-6 py-4">
+                            <div class="font-semibold text-white">${d.document_id}</div>
+                            <div class="text-xs text-slate-400">${d.title}</div>
+                        </td>
+                        <td class="px-6 py-4 text-xs text-slate-300 font-mono">${d.category}</td>
+                        <td class="px-6 py-4 text-xs text-slate-400">${d.department || 'Company-Wide'}</td>
+                        <td class="px-6 py-4 text-xs font-bold text-indigo-400">v${d.version}</td>
+                        <td class="px-6 py-4">${statusBadge}</td>
+                        <td class="px-6 py-4">${processBadge}</td>
+                        <td class="px-6 py-4 text-xs text-slate-300">
+                            ${d.total_chunks} chunks
+                            ${d.adversarial_flags_count > 0 ? `<span class="ml-1 text-rose-400 font-bold" title="Adversarial Flags"><i class="fa-solid fa-triangle-exclamation"></i> ${d.adversarial_flags_count}</span>` : ''}
+                        </td>
+                        <td class="px-6 py-4 text-right space-x-2">
+                            <button onclick="viewChunks('${d.document_id}', ${d.version})" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-1.5 rounded-md text-indigo-300 font-medium transition">
+                                <i class="fa-solid fa-eye mr-1"></i> Chunks
+                            </button>
+                            <button onclick="openNewVersionModal('${d.document_id}', ${d.version + 1}, '${d.title}')" class="bg-indigo-900/60 hover:bg-indigo-800 text-xs px-3 py-1.5 rounded-md text-indigo-200 font-medium transition">
+                                <i class="fa-solid fa-code-branch mr-1"></i> New Ver
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function updateStats(docs) {
+            document.getElementById('statTotalDocs').innerText = docs.length;
+            document.getElementById('statActiveDocs').innerText = docs.filter(d => d.status === 'active').length;
+            const totalChunks = docs.reduce((acc, d) => acc + (d.total_chunks || 0), 0);
+            const totalFlags = docs.reduce((acc, d) => acc + (d.adversarial_flags_count || 0), 0);
+            document.getElementById('statTotalChunks').innerText = totalChunks;
+            document.getElementById('statFlaggedScans').innerText = totalFlags;
+        }
+
+        function openUploadModal() {
+            document.getElementById('uploadForm').reset();
+            document.getElementById('formEffectiveDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('uploadModalTitle').innerText = 'Upload Organizational Document';
+            document.getElementById('uploadModal').classList.remove('hidden');
+        }
+
+        function openNewVersionModal(docId, nextVersion, title) {
+            openUploadModal();
+            document.getElementById('uploadModalTitle').innerText = `Upload New Version for ${docId}`;
+            document.getElementById('formDocumentId').value = docId;
+            document.getElementById('formVersion').value = nextVersion;
+            document.getElementById('formTitle').value = title;
+        }
+
+        function closeUploadModal() {
+            document.getElementById('uploadModal').classList.add('hidden');
+        }
+
+        async function handleUploadSubmit(e) {
+            e.preventDefault();
+            const submitBtn = document.getElementById('uploadSubmitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Processing...`;
+
+            try {
+                const formData = new FormData();
+                formData.append('document_id', document.getElementById('formDocumentId').value);
+                formData.append('version', document.getElementById('formVersion').value);
+                formData.append('title', document.getElementById('formTitle').value);
+                formData.append('category', document.getElementById('formCategory').value);
+                formData.append('department', document.getElementById('formDepartment').value || '');
+                formData.append('effective_date', document.getElementById('formEffectiveDate').value);
+                formData.append('expiry_date', document.getElementById('formExpiryDate').value || '');
+                formData.append('description', document.getElementById('formDescription').value || '');
+                formData.append('file', document.getElementById('formFile').files[0]);
+
+                const res = await fetch(`${API_BASE}/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    alert(`Upload Error: ${err.detail || 'Upload failed'}`);
+                } else {
+                    closeUploadModal();
+                    loadDocuments();
+                }
+            } catch (err) {
+                alert(`Upload Exception: ${err.message}`);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i><span>Upload & Process</span>`;
+            }
+        }
+
+        async function viewChunks(documentId, version) {
+            try {
+                const res = await fetch(`${API_BASE}/${documentId}/versions/${version}/chunks`);
+                const chunks = await res.json();
+                
+                document.getElementById('detailsModalTitle').innerText = `Traceable Chunks: ${documentId} (v${version})`;
+                document.getElementById('detailsModalSubtitle').innerText = `${chunks.length} Extracted Sections / Chunks`;
+                
+                const container = document.getElementById('detailsModalContent');
+                if (!chunks || chunks.length === 0) {
+                    container.innerHTML = `<div class="text-center py-12 text-slate-500">No chunks extracted for this document version.</div>`;
+                } else {
+                    container.innerHTML = chunks.map(c => `
+                        <div class="glass-card p-4 rounded-xl border border-slate-700/60 hover:border-slate-600 transition">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="font-mono text-xs text-indigo-400 font-bold">[Chunk #${c.chunk_index}] ${c.section_id}</span>
+                                <div class="flex items-center space-x-2">
+                                    ${c.page_number ? `<span class="bg-cyan-950 text-cyan-300 text-[10px] px-2 py-0.5 rounded font-mono"><i class="fa-solid fa-file-pdf mr-1"></i>Page ${c.page_number}</span>` : ''}
+                                    ${c.paragraph_reference ? `<span class="bg-indigo-950 text-indigo-300 text-[10px] px-2 py-0.5 rounded font-mono"><i class="fa-solid fa-paragraph mr-1"></i>${c.paragraph_reference}</span>` : ''}
+                                    ${c.contains_adversarial_flag ? `<span class="bg-rose-950 text-rose-300 text-[10px] px-2 py-0.5 rounded font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Adversarial Flag</span>` : ''}
+                                </div>
+                            </div>
+                            <h4 class="text-sm font-semibold text-white mb-2"><i class="fa-solid fa-heading text-slate-400 text-xs mr-1"></i> ${c.heading || c.section_title}</h4>
+                            <div class="bg-slate-950 p-3 rounded-lg text-xs font-mono text-slate-300 whitespace-pre-wrap leading-relaxed border border-slate-800">${c.chunk_text}</div>
+                        </div>
+                    `).join('');
+                }
+
+                document.getElementById('detailsModal').classList.remove('hidden');
+            } catch (err) {
+                alert(`Error loading chunks: ${err.message}`);
+            }
+        }
+
+        function closeDetailsModal() {
+            document.getElementById('detailsModal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
