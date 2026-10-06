@@ -130,7 +130,11 @@ def migrate(source_sqlite_path: str, target_pg_url: str):
     sqlite_inspector = inspect(sqlite_engine)
     existing_sqlite_tables = set(sqlite_inspector.get_table_names())
 
-    # Connect to PostgreSQL
+    # Connect to PostgreSQL (pin psycopg2 driver for SQLAlchemy >= 2.1)
+    if target_pg_url.startswith("postgres://"):
+        target_pg_url = target_pg_url.replace("postgres://", "postgresql://", 1)
+    if target_pg_url.startswith("postgresql://"):
+        target_pg_url = target_pg_url.replace("postgresql://", "postgresql+psycopg2://", 1)
     pg_engine = create_engine(target_pg_url, pool_pre_ping=True)
 
     print("\n1. Creating database schema on PostgreSQL...")

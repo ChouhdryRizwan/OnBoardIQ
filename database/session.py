@@ -11,6 +11,11 @@ if raw_db_url.startswith("postgres://"):
 else:
     db_url = raw_db_url
 
+# Pin the driver: SQLAlchemy >= 2.1 resolves bare postgresql:// to psycopg (v3),
+# but requirements.txt ships psycopg2-binary.
+if db_url.startswith("postgresql://"):
+    db_url = db_url.replace("postgresql://", "postgresql+psycopg2://", 1)
+
 connect_args = {}
 engine_kwargs = {"echo": False}
 
