@@ -152,6 +152,10 @@ def _build_final_plan_response(db: Session, plan: OnboardingPlan) -> FinalOnboar
         final_approval_status = "APPROVED"
     elif review_queue_item and review_queue_item.status == "rejected":
         final_approval_status = "REJECTED"
+    elif review_queue_item:
+        # Plan is still awaiting human decision (pending / in_review) — must never
+        # report FINALIZED/APPROVED while the queue list shows it as pending.
+        final_approval_status = "PENDING_APPROVAL"
     elif status_str in ["verified", "verified_with_warning", "approved"]:
         final_approval_status = "FINALIZED"
     else:
