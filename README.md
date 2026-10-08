@@ -10,6 +10,19 @@ OnBoardIQ is an enterprise-grade corporate onboarding & training intelligence en
 
 ---
 
+## 🌐 Live Deployment
+
+| Service | Stack | URL |
+|---|---|---|
+| **Frontend** | Next.js on Vercel | **https://on-board-iq-rho.vercel.app** |
+| **Backend API** | FastAPI on Render | **https://onboardiq-gp3c.onrender.com** |
+| **API Docs** | Swagger UI | https://onboardiq-gp3c.onrender.com/docs |
+| **Health Check** | `/health` | https://onboardiq-gp3c.onrender.com/health |
+
+> Database: **Neon Serverless PostgreSQL**. The frontend is configured to call the Render backend (`https://onboardiq-gp3c.onrender.com`).
+
+---
+
 ## ⚡ Core Architecture & Workflow Lifecycle
 
 ```
